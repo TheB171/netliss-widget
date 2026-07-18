@@ -83,7 +83,7 @@ async function nlApi(payload){
   try{
     var r = await fetch(CFG.webhook, {
       method: "POST",
-      headers: { "Content-Type": "text/plain" },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
     });
     var texto = await r.text();
