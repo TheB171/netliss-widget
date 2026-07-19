@@ -379,8 +379,9 @@ async function nlGerarTeste(){
   nlDigitar(async function(){
     var r = await nlApi({ acao:"teste", operadora: NL.op || "", modalidade: NL.mod || "" });
     if(r && r.usuario && r.usuario !== "undefined"){
+      NL.copiaUser = r.usuario; NL.copiaSenha = r.senha;
       var trata = NL.nome ? ", <b>" + nlEscapar(NL.nome) + "</b>" : "";
-      nlMsgLiss("Prontinho" + trata + "! <b>Seu teste grátis está liberado:</b><br><br>Usuário: <b>" + nlEscapar(r.usuario) + "</b><br>Senha: <b>" + nlEscapar(r.senha) + "</b><br>Validade: <b>" + nlEscapar(r.validade_horas) + " hora</b><br><br>É só colocar esses dados no aplicativo, escolher a opção da sua operadora e conectar. Qualquer coisa, estou aqui.", function(){
+      nlMsgLiss("Prontinho" + trata + "! <b>Seu teste grátis está liberado:</b><br><br>Usuário: <b>" + nlEscapar(r.usuario) + "</b><br>Senha: <b>" + nlEscapar(r.senha) + "</b><br>Validade: <b>" + nlEscapar(r.validade_horas) + " hora</b><br><br><button class='chip' onclick='nlCopiarCred(0,this)'>Copiar usuário</button> <button class='chip' onclick='nlCopiarCred(1,this)'>Copiar senha</button><br><br>É só colocar esses dados no aplicativo, escolher a opção da sua operadora e conectar. Qualquer coisa, estou aqui.", function(){
         nlChips([
           { rotulo:"Quero contratar", acao:nlMostrarPlanos },
           { rotulo:"Quero revender", acao:nlRevenda },
@@ -508,7 +509,7 @@ function nlValidarDadosPix(){
 function nlPagarPix(){
   nlDigitar(async function(){
     var p = CFG.planos[NL.planoAtual];
-    var corpo = { acao:"pagamento_criar", plan_id: p.id, nome: NL.pgNome, email: NL.pgEmail, cpf: NL.pgCpf };
+    var corpo = { acao:"pagamento_criar", metodo:"pix", plan_id: p.id, nome: NL.pgNome, email: NL.pgEmail, cpf: NL.pgCpf };
     if(NL.modoRenov && NL.contaRenov){ corpo.account_id = NL.contaRenov; }
     var r = await nlApi(corpo);
     if(r && r.success && r.pix){
@@ -547,7 +548,8 @@ function nlIniciarPolling(paymentId, plano){
       clearInterval(NL.pollTimer);
       var cred = "";
       if(s.username && s.password){
-        cred = "<br><br>Usuário: <b>" + nlEscapar(s.username) + "</b><br>Senha: <b>" + nlEscapar(s.password) + "</b><br><br><b>Muito importante:</b> anote e guarde essas credenciais com carinho. A Netliss não armazena usuário e senha — se você perder, não conseguimos recuperar.";
+        NL.copiaUser = s.username; NL.copiaSenha = s.password;
+        cred = "<br><br>Usuário: <b>" + nlEscapar(s.username) + "</b><br>Senha: <b>" + nlEscapar(s.password) + "</b><br><br><button class='chip' onclick='nlCopiarCred(0,this)'>Copiar usuário</button> <button class='chip' onclick='nlCopiarCred(1,this)'>Copiar senha</button><br><br><b>Muito importante:</b> anote e guarde essas credenciais com carinho. A Netliss não armazena usuário e senha — se você perder, não conseguimos recuperar.";
       } else {
         cred = "<br><br>Suas credenciais chegam no seu e-mail <b>" + nlEscapar(NL.pgEmail) + "</b> em instantes. Guarde com carinho: a Netliss não armazena usuário e senha.";
       }
@@ -570,24 +572,72 @@ function nlIniciarPolling(paymentId, plano){
   }, 7000);
 }
 function nlFormCartao(){
-  nlMsgLiss("Perfeito! No <b>cartão de crédito</b>, nossa equipe conclui a compra com você pelo <b>WhatsApp</b>, com toda a segurança.<br><br>Preenche seus dados:", function(){
-    nlForm("<input id='nl-ct-nome' type='text' placeholder='Seu nome' maxlength='60'>" +
-           nlTelHtml("nl-ct") +
-           "<button class='botao' onclick='nlEnviarLeadCartao()'>Quero pagar no cartão</button>");
-    if(NL.nome){ document.getElementById("nl-ct-nome").value = NL.nome; }
+  nlMsgLiss("Perfeito! Preencha os dados abaixo para pagar com <b>cartão de crédito</b>:<br><br><i>Nome, e-mail e CPF são exigidos pelo Mercado Pago para emitir a cobrança em seu nome. O número do cartão você digita direto no ambiente seguro do Mercado Pago — ele nunca passa pela Netliss.</i>", function(){
+    nlForm("<input id='nl-pg-nome' type='text' placeholder='Seu nome completo' maxlength='60'>" +
+           "<input id='nl-pg-email' type='email' placeholder='Seu e-mail' maxlength='80'>" +
+           "<input id='nl-pg-cpf' type='tel' placeholder='Seu CPF (só números)' maxlength='11'>" +
+           "<button class='botao' onclick='nlValidarDadosCartao()'>Continuar para o pagamento</button>");
+    if(NL.nome){ document.getElementById("nl-pg-nome").value = NL.nome; }
   });
 }
-function nlEnviarLeadCartao(){
-  var nome = document.getElementById("nl-ct-nome").value.trim();
-  var tel = nlTelLer("nl-ct");
-  if(nome.length < 2){ alert("Digite seu nome"); return; }
-  if(!tel){ alert("Preencha o DDD e o número do WhatsApp"); return; }
-  var p = CFG.planos[NL.planoAtual];
-  nlMsgUser(nome + " - " + tel);
-  nlApiFogo({ acao:"lead_cartao", nome:nome, whatsapp:tel, plano: p.nome + " " + p.preco });
-  nlMsgLiss("Prontinho, <b>" + nlEscapar(nome.split(" ")[0]) + "</b>!<br>Nossa equipe vai te chamar no WhatsApp <b>" + nlEscapar(tel) + "</b> em instantes para concluir o seu <b>" + p.nome + "</b> no cartão.", function(){
-    nlEncerrar();
-  });
+function nlValidarDadosCartao(){
+  var nome = document.getElementById("nl-pg-nome").value.trim();
+  var email = document.getElementById("nl-pg-email").value.trim();
+  var cpf = nlSoNumeros(document.getElementById("nl-pg-cpf").value);
+  if(nome.length < 5){ alert("Digite seu nome completo"); return; }
+  if(email.indexOf("@") < 1 || email.indexOf(".") < 3){ alert("Digite um e-mail válido"); return; }
+  if(cpf.length !== 11){ alert("O CPF precisa ter 11 números"); return; }
+  NL.pgNome = nome; NL.pgEmail = email; NL.pgCpf = cpf;
+  nlMsgUser(nome);
+  nlApiFogo({ acao:"nome", nome:nome, email:email });
+  nlPagarCartao();
+}
+function nlAcharUrlPagamento(r){
+  var campos = ["checkout_url", "payment_url", "init_point", "card_url", "url"];
+  var fontes = [r, r && r.card, r && r.payment, r && r.dados];
+  for(var f = 0; f < fontes.length; f++){
+    var o = fontes[f];
+    if(!o){ continue; }
+    for(var c = 0; c < campos.length; c++){
+      var v = o[campos[c]];
+      if(v && String(v).indexOf("http") === 0){ return String(v); }
+    }
+  }
+  return "";
+}
+function nlPagarCartao(){
+  nlDigitar(async function(){
+    var p = CFG.planos[NL.planoAtual];
+    var corpo = { acao:"pagamento_criar", metodo:"credit_card", plan_id: p.id, nome: NL.pgNome, email: NL.pgEmail, cpf: NL.pgCpf };
+    if(NL.modoRenov && NL.contaRenov){ corpo.account_id = NL.contaRenov; }
+    var r = await nlApi(corpo);
+    var urlPg = r ? nlAcharUrlPagamento(r) : "";
+    if(r && r.success && urlPg){
+      NL.urlCartao = urlPg;
+      nlMsgLiss("Tudo certo para o seu <b>" + p.nome + "</b> (" + p.preco + ")!", function(){
+        nlCard("<div class='titulo'>Pagamento com cartão</div>" +
+          "<div class='desc'>Clique no botão abaixo para concluir na página segura do <b>Mercado Pago</b>. Assim que o pagamento for aprovado, eu te aviso <b>aqui mesmo</b> no chat e já te entrego o seu acesso.</div>" +
+          "<button class='botao' style='width:100%' onclick='nlAbrirCheckout()'>Pagar com cartão</button>");
+        nlIniciarPolling(r.payment_id, p);
+      });
+    } else if(r && r.success && r.payment_id){
+      nlMsgLiss("Pagamento do <b>" + p.nome + "</b> iniciado! Assim que for aprovado, eu te aviso <b>aqui mesmo</b> no chat.", function(){
+        nlIniciarPolling(r.payment_id, p);
+      });
+    } else {
+      var msgErro = (r && r.message) ? nlEscapar(r.message) : "tive uma instabilidade para iniciar o pagamento";
+      nlMsgLiss("Opa: " + msgErro + ".<br>Vamos tentar de novo?", function(){
+        nlChips([
+          { rotulo:"Tentar novamente", acao:nlFormCartao },
+          { rotulo:"Pagar com PIX", acao:nlFormPix },
+          { rotulo:"Atendimento", acao:nlIrParaLiss }
+        ]);
+      });
+    }
+  }, 400);
+}
+function nlAbrirCheckout(){
+  if(NL.urlCartao){ window.open(NL.urlCartao, "_blank"); }
 }
 
 // ---------------- JA SOU CLIENTE ----------------
@@ -777,6 +827,15 @@ async function nlEnviarTexto(){
     while(limpo.indexOf(aspas) >= 0){ limpo = limpo.replace(aspas, String.fromCharCode(39)); }
     while(limpo.indexOf(barra) >= 0){ limpo = limpo.replace(barra, " "); }
     while(limpo.indexOf(quebra) >= 0){ limpo = limpo.replace(quebra, " "); }
+    if(!NL.difyConv){
+      var ctx = "[CONTEXTO INTERNO - use mas nunca mencione:";
+      ctx += " nome=" + (NL.nome || "nao informado");
+      if(NL.op){ ctx += "; operadora=" + NL.op; }
+      if(NL.mod){ ctx += "; modalidade=" + NL.mod; }
+      if(NL.usuarioApp){ ctx += "; usuario_app=" + NL.usuarioApp; }
+      ctx += "; id=" + NL.clientId + "] ";
+      limpo = ctx + limpo;
+    }
     var d = await nlApi({ acao: "liss", query: limpo, conv: NL.difyConv || "" });
     t.remove();
     var textoLiss = "";
@@ -791,12 +850,43 @@ async function nlEnviarTexto(){
     }
     if(textoLiss){
       if(convId && !NL.difyConv){ NL.difyConv = convId; nlSalvarConv(); }
-      var d2 = document.createElement("div");
-      d2.className = "msg liss";
-      d2.innerHTML = nlFormatarLiss(textoLiss);
-      NL.corpo.appendChild(d2);
-      nlRolar();
-      nlHistPush("liss", d2.innerHTML);
+      nlLog("liss", textoLiss);
+      var cmd = "";
+      var marcas = ["[ACAO:PLANOS]", "[ACAO:ENCERRAR]"];
+      for(var mi = 0; mi < marcas.length; mi++){
+        if(textoLiss.indexOf(marcas[mi]) !== -1){
+          cmd = marcas[mi];
+          textoLiss = textoLiss.split(marcas[mi]).join(" ");
+        }
+      }
+      if(textoLiss.indexOf("[CHAMADO]") !== -1){
+        textoLiss = textoLiss.split("[CHAMADO]")[0];
+      }
+      textoLiss = textoLiss.trim();
+      if(textoLiss){
+        var d2 = document.createElement("div");
+        d2.className = "msg liss";
+        d2.innerHTML = nlFormatarLiss(textoLiss);
+        NL.corpo.appendChild(d2);
+        nlRolar();
+        nlHistPush("liss", d2.innerHTML);
+      }
+      if(cmd === "[ACAO:ENCERRAR]"){
+        nlTravar(false);
+        nlEncerrar();
+        return;
+      }
+      if(cmd === "[ACAO:PLANOS]"){
+        nlTravar(false);
+        nlBloquearDigitacao();
+        if(NL.pollTimer){ clearInterval(NL.pollTimer); }
+        if(NL.ticket){ nlApiFogo({ acao: "ticket_fechar", ticket_id: NL.ticket }); }
+        NL.ticket = null;
+        NL.difyConv = null;
+        try{ localStorage.removeItem("netliss_ticket"); }catch(e){}
+        nlMostrarPlanos();
+        return;
+      }
     } else {
       nlMsgLiss("Desculpa, tive uma instabilidade agora. Pode repetir a sua mensagem?", null, "liss");
     }
@@ -805,6 +895,28 @@ async function nlEnviarTexto(){
     nlMsgLiss("Desculpa, tive uma instabilidade de conexão. Pode tentar de novo?", null, "liss");
   }
   nlTravar(false);
+}
+function nlCopiarCred(qual, btn){
+  var v = qual === 0 ? NL.copiaUser : NL.copiaSenha;
+  if(!v){ return; }
+  var ok = function(){
+    if(btn){
+      btn.textContent = "Copiado!";
+      setTimeout(function(){ btn.textContent = qual === 0 ? "Copiar usuário" : "Copiar senha"; }, 1600);
+    }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(String(v)).then(ok, function(){ nlCopiarFallback(v); ok(); });
+  } else { nlCopiarFallback(v); ok(); }
+}
+function nlCopiarFallback(v){
+  var ta = document.createElement("textarea");
+  ta.value = String(v);
+  ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  ta.remove();
 }
 function nlDemoAnexo(){ nlSistema("envio de arquivos chega na próxima atualização"); }
 function nlDemoAudio(){ nlSistema("envio de áudio chega na próxima atualização"); }
