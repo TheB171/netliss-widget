@@ -34,8 +34,8 @@ var CFG = {
     "TOP":    { id: 7, nome: "Netliss TOP", preco: "R$ 59,90", desc: "3 meses · até 2 pessoas · cerca de R$ 9,98 por pessoa/mês" },
     "VIP":    { id: 8, nome: "Netliss VIP", preco: "R$ 99,90", desc: "6 meses · até 3 pessoas · cerca de R$ 5,55 por pessoa/mês" }
   },
-  ttlId: 172800000,
-  ttlTicket: 172800000
+  ttlId: 3153600000000,
+  ttlTicket: 86400000
 };
 
 var NL = { aberto:false, jaAbriu:false, corpo:null, clientId:null, nome:null, op:null, mod:null,
@@ -60,8 +60,8 @@ function nlGerarId(){
   var salvo = nlLer("netliss_id");
   if(salvo){ return salvo; }
   var chars = "abcdefghjkmnpqrstuvwxyz23456789";
-  var id = "NL-";
-  for(var i=0;i<10;i++){ id += chars.charAt(Math.floor(Math.random()*chars.length)); }
+  var id = "NL-" + Date.now().toString(36) + "-";
+  for(var i=0;i<6;i++){ id += chars.charAt(Math.floor(Math.random()*chars.length)); }
   nlSalvar("netliss_id", id, CFG.ttlId);
   return id;
 }
