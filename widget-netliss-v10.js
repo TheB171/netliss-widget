@@ -12,10 +12,10 @@ fonte.rel = 'stylesheet';
 fonte.href = 'https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&family=Inter:wght@400;500;600;700&display=swap';
 document.head.appendChild(fonte);
 var est = document.createElement('style');
-est.textContent = ["","  :root{","    --fundo:#05060d;","    --vidro:rgba(15,19,34,.72);","    --vidro-claro:rgba(255,255,255,.055);","    --borda:rgba(255,255,255,.09);","    --neon:#C6F43F;","    --neon2:#9CCB1E;","    --rosa:#ff3d8a;","    --laranja:#ff8a3d;","    --texto:#f4f6ff;","    --suave:#8b90a8;","    --grad-neon:linear-gradient(135deg,#D5FA66,#A9D51F);","    --fonte-display:'Montserrat',sans-serif;","    --fonte:'Inter',system-ui,sans-serif;","  }","  #nl-moldura *, #nl-bolha *, #nl-teaser *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}","  #nl-moldura, #nl-bolha, #nl-teaser{font-family:var(--fonte);color:var(--texto)}","  @media (prefers-reduced-motion: reduce){","    #nl-bolha{animation:none !important}","  }","","  /* ===== BALÃO ===== */","  #nl-bolha{","    position:fixed;right:22px;bottom:22px;z-index:999990;","    width:72px;height:72px;cursor:pointer;display:none;border:none;background:none;","    filter:drop-shadow(0 8px 22px rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(198,244,63,.35));","    transition:transform .2s ease;","    animation:flutuar 3.2s ease-in-out infinite;","  }","  #nl-bolha:hover{transform:scale(1.08)}","  #nl-bolha img{width:100%;height:100%;object-fit:contain}","  @keyframes flutuar{0%,100%{translate:0 0}50%{translate:0 -5px}}","","  /* teaser */","  #nl-teaser{","    position:fixed;right:104px;bottom:36px;z-index:999989;max-width:250px;","    background:var(--vidro);backdrop-filter:blur(16px);","    border:1px solid rgba(198,244,63,.35);border-radius:18px 18px 4px 18px;","    padding:14px 16px;font-size:13.5px;line-height:1.5;display:none;cursor:pointer;","    box-shadow:0 12px 34px rgba(0,0,0,.5), 0 0 20px rgba(198,244,63,.12);","  }","  #nl-teaser b{color:var(--neon)}","  #nl-teaser .fechar{position:absolute;top:-9px;left:-9px;width:22px;height:22px;border-radius:50%;","    background:#0f1322;border:1px solid var(--borda);color:var(--suave);","    display:flex;align-items:center;justify-content:center;font-size:11px}","","  /* ===== JANELA ===== */","  #nl-moldura{","    position:fixed;right:20px;bottom:20px;z-index:999995;display:none;","    width:min(392px, calc(100vw - 40px));height:min(640px, calc(100vh - 40px));","    border-radius:28px;padding:1.5px;","    background:linear-gradient(160deg, rgba(198,244,63,.75), rgba(198,244,63,.08) 30%, rgba(255,61,138,.10) 70%, rgba(255,61,138,.55));","    box-shadow:0 30px 80px rgba(0,0,0,.65), 0 0 46px rgba(198,244,63,.14);","  }","  #nl-chat{","    width:100%;height:100%;border-radius:26.5px;overflow:hidden;","    background:var(--vidro);backdrop-filter:blur(22px);","    display:flex;flex-direction:column;","  }","  @media (max-width:520px){","    #nl-moldura{right:0;bottom:0;width:100vw;height:100dvh;border-radius:0;padding:0}","    #nl-chat{border-radius:0}","    #nl-moldura .msg{max-width:88%;font-size:15px;line-height:1.6;padding:12px 15px}","    #nl-moldura .chip{padding:12px 18px;font-size:14.5px;min-height:44px}","    #nl-moldura .card,#nl-moldura .form{max-width:94%;width:94%}","    #nl-moldura .card .desc{font-size:13px}","    #nl-moldura .nl-pill{min-height:48px}","    #nl-corpo{padding:16px 12px}","  }","  /* diagramação dos textos dentro das bolhas */","  #nl-moldura .msg br + br{content:'';display:block;margin-top:6px}","  #nl-moldura .msg{overflow-wrap:break-word;word-break:break-word;hyphens:auto}","","  #nl-moldura .nl-topo{","    display:flex;align-items:center;gap:12px;padding:14px 18px;flex-shrink:0;","    background:linear-gradient(180deg, rgba(255,255,255,.05), transparent);","    border-bottom:1px solid var(--borda);","  }","  #nl-moldura .nl-topo img{width:46px;height:46px;object-fit:contain}","  #nl-moldura .nl-topo .nome{font-weight:700;font-size:16px;font-family:var(--fonte-display);letter-spacing:.3px}","  #nl-moldura .nl-topo .status{font-size:11.5px;color:var(--neon);display:flex;align-items:center;gap:5px}","  #nl-moldura .nl-topo .status::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--neon);","    box-shadow:0 0 8px rgba(198,244,63,.9);display:inline-block}","  #nl-moldura .nl-topo .acoes{margin-left:auto;display:flex;gap:6px}","  #nl-moldura .nl-topo button{","    background:var(--vidro-claro);border:1px solid var(--borda);color:var(--suave);","    width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:14px","  }","  #nl-moldura .nl-topo button:hover{color:var(--texto);border-color:rgba(255,255,255,.25)}","","  #nl-corpo{flex:1;overflow-y:auto;padding:18px 16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}","  #nl-corpo::-webkit-scrollbar{width:5px}","  #nl-corpo::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}","","  #nl-moldura .msg{max-width:82%;padding:11px 15px;border-radius:18px;font-size:14px;line-height:1.55;","    animation:surgir .28s cubic-bezier(.2,.8,.3,1);word-wrap:break-word}","  @keyframes surgir{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}","  #nl-moldura .msg.liss{","    background:var(--vidro-claro);border:1px solid var(--borda);","    border-radius:18px 18px 18px 6px;align-self:flex-start;","    box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.06);","  }","  #nl-moldura .msg.user{","    background:var(--grad-neon);color:#04120a;font-weight:500;","    border-radius:18px 18px 6px 18px;align-self:flex-end;","    box-shadow:0 6px 18px rgba(198,244,63,.25), inset 0 1px 0 rgba(255,255,255,.4);","  }","  #nl-moldura .msg b{color:var(--neon)}","  #nl-moldura .msg.user b{color:#04120a}","  #nl-moldura .msg i{color:var(--suave);font-size:12.5px}","","  #nl-moldura .sistema{","    align-self:center;font-size:11px;color:var(--suave);","    border:1px dashed rgba(255,255,255,.15);border-radius:99px;padding:5px 12px;margin:2px 0;","    background:rgba(0,0,0,.2)","  }","  #nl-moldura .sistema b{color:var(--rosa)}","","  #nl-moldura .chips{display:flex;flex-wrap:wrap;gap:8px;align-self:flex-start;max-width:92%;animation:surgir .28s ease}","  #nl-moldura .chip{","    background:var(--vidro-claro);backdrop-filter:blur(8px);","    border:1px solid rgba(198,244,63,.5);color:var(--neon);","    border-radius:99px;padding:10px 17px;font-size:13.5px;font-weight:600;cursor:pointer;","    font-family:var(--fonte);transition:all .16s ease;","  }","  #nl-moldura .chip:hover{background:var(--grad-neon);color:#04120a;border-color:transparent;","    box-shadow:0 0 18px rgba(198,244,63,.35);transform:translateY(-1px)}","  #nl-moldura .chip.secundario{border-color:var(--borda);color:var(--suave)}","  #nl-moldura .chip.secundario:hover{background:rgba(255,255,255,.1);color:var(--texto);box-shadow:none}","","  #nl-moldura .card{","    align-self:flex-start;max-width:88%;","    background:var(--vidro-claro);border:1px solid var(--borda);","    border-radius:18px;padding:15px;animation:surgir .28s ease;","    box-shadow:0 6px 20px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06);","  }","  #nl-moldura .card .titulo{font-weight:700;font-size:14.5px;margin-bottom:4px;font-family:var(--fonte-display)}","  #nl-moldura .card .desc{font-size:12.5px;color:var(--suave);line-height:1.55;margin-bottom:11px}","  #nl-moldura .card .botao{","    display:inline-block;background:var(--grad-neon);color:#04120a;font-weight:700;font-size:13px;","    border:none;border-radius:11px;padding:10px 17px;cursor:pointer;font-family:var(--fonte);","    box-shadow:0 4px 14px rgba(198,244,63,.28), inset 0 1px 0 rgba(255,255,255,.4);","    transition:transform .15s ease;","  }","  #nl-moldura .card .botao:hover{transform:translateY(-1px)}","  #nl-moldura .card .preco{color:var(--neon);font-weight:700;font-size:19px;font-family:var(--fonte-display);","    text-shadow:0 0 16px rgba(198,244,63,.4)}","  #nl-moldura .card.destaque{border-color:rgba(198,244,63,.55);box-shadow:0 0 26px rgba(198,244,63,.16), inset 0 1px 0 rgba(255,255,255,.06)}","  #nl-moldura .tag{display:inline-block;background:var(--grad-neon);color:#04120a;font-size:10px;font-weight:800;","    border-radius:99px;padding:3px 10px;margin-bottom:7px;letter-spacing:.5px}","  #nl-moldura .video-fake{","    width:100%;aspect-ratio:16/9;background:rgba(0,0,0,.45);border-radius:12px;margin-bottom:11px;","    display:flex;align-items:center;justify-content:center;color:var(--suave);font-size:12px;","    border:1px solid var(--borda);cursor:pointer","  }","  #nl-moldura .video-fake .play{width:46px;height:46px;border-radius:50%;background:var(--grad-neon);color:#04120a;","    display:flex;align-items:center;justify-content:center;font-size:16px;margin-right:10px;","    box-shadow:0 0 20px rgba(198,244,63,.4)}","","  #nl-moldura .form{align-self:flex-start;width:88%;background:var(--vidro-claro);border:1px solid var(--borda);","    border-radius:18px;padding:15px;display:flex;flex-direction:column;gap:10px;animation:surgir .28s ease}","  #nl-moldura .form input{","    background:rgba(0,0,0,.35);border:1px solid var(--borda);border-radius:11px;color:var(--texto);","    padding:12px 14px;font-size:14px;outline:none;font-family:var(--fonte)","  }","  #nl-moldura .form input:focus{border-color:rgba(198,244,63,.6);box-shadow:0 0 12px rgba(198,244,63,.15)}","  #nl-moldura .form .botao{background:var(--grad-neon);color:#04120a;font-weight:700;border:none;border-radius:11px;","    padding:12px;cursor:pointer;font-size:14px;font-family:var(--fonte);","    box-shadow:0 4px 14px rgba(198,244,63,.28), inset 0 1px 0 rgba(255,255,255,.4)}","","  #nl-moldura .digitando{display:flex;gap:4px;align-self:flex-start;background:var(--vidro-claro);","    border:1px solid var(--borda);border-radius:18px 18px 18px 6px;padding:14px 17px}","  #nl-moldura .digitando span{width:7px;height:7px;border-radius:50%;background:var(--neon);opacity:.7;animation:pontinho 1.2s infinite}","  #nl-moldura .digitando span:nth-child(2){animation-delay:.15s}","  #nl-moldura .digitando span:nth-child(3){animation-delay:.3s}","  @keyframes pontinho{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}","","  /* barra de digitação */","  #nl-moldura .nl-input{","    display:none;align-items:center;gap:10px;padding:10px 12px 12px;flex-shrink:0;","    border-top:1px solid var(--borda);animation:surgir .3s ease;","  }","  #nl-moldura .nl-input.ativa{display:flex}","  #nl-moldura .nl-pill{","    flex:1;display:flex;align-items:center;gap:8px;","    background:rgba(0,0,0,.35);border:1px solid var(--borda);border-radius:99px;","    padding:6px 8px 6px 16px;min-height:46px;transition:border-color .15s ease;","  }","  #nl-moldura .nl-pill:focus-within{border-color:rgba(198,244,63,.5);box-shadow:0 0 14px rgba(198,244,63,.12)}","  #nl-moldura .nl-pill input{","    flex:1;background:transparent;border:none;outline:none;color:var(--texto);","    font-size:15px;font-family:var(--fonte);min-width:0","  }","  #nl-moldura .nl-pill input::placeholder{color:var(--suave)}","  #nl-moldura .nl-icone{","    width:34px;height:34px;border:none;background:transparent;cursor:pointer;","    display:flex;align-items:center;justify-content:center;border-radius:50%;","    transition:background .15s ease;flex-shrink:0","  }","  #nl-moldura .nl-icone:hover{background:rgba(255,255,255,.08)}","  #nl-moldura .nl-icone img{width:19px;height:19px;object-fit:contain;opacity:.85}","  #nl-enviar{","    width:46px;height:46px;border:none;background:transparent;cursor:pointer;padding:0;flex-shrink:0;","    filter:drop-shadow(0 4px 14px rgba(198,244,63,.35));","    transition:transform .15s ease;","  }","  #nl-enviar:hover{transform:scale(1.07)}","  #nl-enviar img{width:100%;height:100%;object-fit:contain}","","  #nl-moldura .pix-codigo{","    font-size:10.5px;color:var(--suave);background:rgba(0,0,0,.35);border:1px solid var(--borda);","    border-radius:8px;padding:8px 10px;margin-bottom:10px;word-break:break-all;text-align:center","  }","  #nl-encerrar{","    display:none;text-align:center;font-size:12px;color:var(--suave);","    padding:7px;cursor:pointer;border-top:1px solid var(--borda);flex-shrink:0;","    transition:color .15s ease;","  }","  #nl-encerrar:hover{color:var(--rosa)}","  #nl-moldura .nl-rodape{","    padding:0 14px 10px;font-size:10.5px;color:var(--suave);text-align:center;flex-shrink:0","  }",""].join(String.fromCharCode(10));
+est.textContent = ["","  :root{","    --fundo:#05060d;","    --vidro:rgba(15,19,34,.72);","    --vidro-claro:rgba(255,255,255,.055);","    --borda:rgba(255,255,255,.09);","    --neon:#C6F43F;","    --neon2:#9CCB1E;","    --rosa:#ff3d8a;","    --laranja:#ff8a3d;","    --texto:#f4f6ff;","    --suave:#8b90a8;","    --grad-neon:linear-gradient(135deg,#D5FA66,#A9D51F);","    --fonte-display:'Montserrat',sans-serif;","    --fonte:'Inter',system-ui,sans-serif;","  }","  #nl-moldura *, #nl-bolha *, #nl-teaser *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}","  #nl-moldura, #nl-bolha, #nl-teaser{font-family:var(--fonte);color:var(--texto)}","  @media (prefers-reduced-motion: reduce){","    #nl-bolha{animation:none !important}","  }","","  /* ===== BALÃO ===== */","  #nl-bolha{","    position:fixed;right:22px;bottom:22px;z-index:999990;","    width:72px;height:72px;cursor:pointer;display:none;border:none;background:none;","    filter:drop-shadow(0 8px 22px rgba(0,0,0,.55)) drop-shadow(0 0 16px rgba(198,244,63,.35));","    transition:transform .2s ease;","    animation:flutuar 3.2s ease-in-out infinite;","  }","  #nl-bolha:hover{transform:scale(1.08)}","  #nl-bolha img{width:100%;height:100%;object-fit:contain}","  @keyframes flutuar{0%,100%{translate:0 0}50%{translate:0 -5px}}","","  /* teaser */","  #nl-teaser{","    position:fixed;right:104px;bottom:36px;z-index:999989;max-width:250px;","    background:var(--vidro);backdrop-filter:blur(16px);","    border:1px solid rgba(198,244,63,.35);border-radius:18px 18px 4px 18px;","    padding:14px 16px;font-size:13.5px;line-height:1.5;display:none;cursor:pointer;","    box-shadow:0 12px 34px rgba(0,0,0,.5), 0 0 20px rgba(198,244,63,.12);","  }","  #nl-teaser b{color:var(--neon)}","  #nl-teaser .fechar{position:absolute;top:-9px;left:-9px;width:22px;height:22px;border-radius:50%;","    background:#0f1322;border:1px solid var(--borda);color:var(--suave);","    display:flex;align-items:center;justify-content:center;font-size:11px}","","  /* ===== JANELA ===== */","  #nl-moldura{","    position:fixed;right:20px;bottom:20px;z-index:999995;display:none;","    width:min(392px, calc(100vw - 40px));height:min(640px, calc(100vh - 40px));","    border-radius:28px;padding:1.5px;","    background:linear-gradient(160deg, rgba(198,244,63,.75), rgba(198,244,63,.08) 30%, rgba(255,61,138,.10) 70%, rgba(255,61,138,.55));","    box-shadow:0 30px 80px rgba(0,0,0,.65), 0 0 46px rgba(198,244,63,.14);","  }","  #nl-chat{","    width:100%;height:100%;border-radius:26.5px;overflow:hidden;","    background:var(--vidro);backdrop-filter:blur(22px);","    display:flex;flex-direction:column;","  }","  @media (max-width:520px){","    #nl-moldura{right:0;bottom:0;width:100vw;height:100dvh;border-radius:0;padding:0}","    #nl-chat{border-radius:0}","    #nl-moldura .msg{max-width:88%;font-size:15px;line-height:1.6;padding:12px 15px}","    #nl-moldura .chip{padding:12px 18px;font-size:14.5px;min-height:44px}","    #nl-moldura .card,#nl-moldura .form{max-width:94%;width:94%}","    #nl-moldura .card .desc{font-size:13px}","    #nl-moldura .nl-pill{min-height:48px}","    #nl-corpo{padding:16px 12px}","  }","  /* diagramação dos textos dentro das bolhas */","  #nl-moldura .msg br + br{content:'';display:block;margin-top:6px}","  #nl-moldura .msg{overflow-wrap:break-word;word-break:break-word;hyphens:auto}","","  #nl-moldura .nl-topo{","    display:flex;align-items:center;gap:12px;padding:14px 18px;flex-shrink:0;","    background:linear-gradient(180deg, rgba(255,255,255,.05), transparent);","    border-bottom:1px solid var(--borda);","  }","  #nl-moldura .nl-topo img{width:46px;height:46px;object-fit:contain}","  #nl-moldura .nl-topo .nome{font-weight:700;font-size:16px;font-family:var(--fonte-display);letter-spacing:.3px}","  #nl-moldura .nl-topo .status{font-size:11.5px;color:var(--neon);display:flex;align-items:center;gap:5px}","  #nl-moldura .nl-topo .status::before{content:'';width:7px;height:7px;border-radius:50%;background:var(--neon);","    box-shadow:0 0 8px rgba(198,244,63,.9);display:inline-block}","  #nl-moldura .nl-topo .acoes{margin-left:auto;display:flex;gap:6px}","  #nl-moldura .nl-topo button{","    background:var(--vidro-claro);border:1px solid var(--borda);color:var(--suave);","    width:32px;height:32px;border-radius:10px;cursor:pointer;font-size:14px","  }","  #nl-moldura .nl-topo button:hover{color:var(--texto);border-color:rgba(255,255,255,.25)}","","  #nl-corpo{flex:1;overflow-y:auto;padding:18px 16px;display:flex;flex-direction:column;gap:10px;scroll-behavior:smooth}","  #nl-corpo::-webkit-scrollbar{width:5px}","  #nl-corpo::-webkit-scrollbar-thumb{background:rgba(255,255,255,.12);border-radius:99px}","","  #nl-moldura .msg{max-width:82%;padding:11px 15px;border-radius:18px;font-size:14px;line-height:1.55;","    animation:surgir .28s cubic-bezier(.2,.8,.3,1);word-wrap:break-word}","  @keyframes surgir{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}","  #nl-moldura .msg.liss{","    background:var(--vidro-claro);border:1px solid var(--borda);","    border-radius:18px 18px 18px 6px;align-self:flex-start;","    box-shadow:0 4px 16px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.06);","  }","  #nl-moldura .msg.user{","    background:var(--grad-neon);color:#04120a;font-weight:500;","    border-radius:18px 18px 6px 18px;align-self:flex-end;","    box-shadow:0 6px 18px rgba(198,244,63,.25), inset 0 1px 0 rgba(255,255,255,.4);","  }","  #nl-moldura .msg b{color:var(--neon)}","  #nl-moldura .msg.user b{color:#04120a}","  #nl-moldura .msg i{color:var(--suave);font-size:12.5px}","","  #nl-moldura .sistema{","    align-self:center;font-size:11px;color:var(--suave);","    border:1px dashed rgba(255,255,255,.15);border-radius:99px;padding:5px 12px;margin:2px 0;","    background:rgba(0,0,0,.2)","  }","  #nl-moldura .sistema b{color:var(--rosa)}","","  #nl-moldura .chips{display:flex;flex-wrap:wrap;gap:8px;align-self:flex-start;max-width:92%;animation:surgir .28s ease}","  #nl-moldura .chip{","    background:var(--vidro-claro);backdrop-filter:blur(8px);","    border:1px solid rgba(198,244,63,.5);color:var(--neon);","    border-radius:99px;padding:10px 17px;font-size:13.5px;font-weight:600;cursor:pointer;","    font-family:var(--fonte);transition:all .16s ease;","  }","  #nl-moldura .chip:hover{background:var(--grad-neon);color:#04120a;border-color:transparent;","    box-shadow:0 0 18px rgba(198,244,63,.35);transform:translateY(-1px)}","  #nl-moldura .chip.secundario{border-color:var(--borda);color:var(--suave)}","  #nl-moldura .chip.secundario:hover{background:rgba(255,255,255,.1);color:var(--texto);box-shadow:none}","","  #nl-moldura .card{","    align-self:flex-start;max-width:88%;","    background:var(--vidro-claro);border:1px solid var(--borda);","    border-radius:18px;padding:15px;animation:surgir .28s ease;","    box-shadow:0 6px 20px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.06);","  }","  #nl-moldura .card .titulo{font-weight:700;font-size:14.5px;margin-bottom:4px;font-family:var(--fonte-display)}","  #nl-moldura .card .desc{font-size:12.5px;color:var(--suave);line-height:1.55;margin-bottom:11px}","  #nl-moldura .card .botao{","    display:inline-block;background:var(--grad-neon);color:#04120a;font-weight:700;font-size:13px;","    border:none;border-radius:11px;padding:10px 17px;cursor:pointer;font-family:var(--fonte);","    box-shadow:0 4px 14px rgba(198,244,63,.28), inset 0 1px 0 rgba(255,255,255,.4);","    transition:transform .15s ease;","  }","  #nl-moldura .card .botao:hover{transform:translateY(-1px)}","  #nl-moldura .card .preco{color:var(--neon);font-weight:700;font-size:19px;font-family:var(--fonte-display);","    text-shadow:0 0 16px rgba(198,244,63,.4)}","  #nl-moldura .card.destaque{border-color:rgba(198,244,63,.55);box-shadow:0 0 26px rgba(198,244,63,.16), inset 0 1px 0 rgba(255,255,255,.06)}","  #nl-moldura .tag{display:inline-block;background:var(--grad-neon);color:#04120a;font-size:10px;font-weight:800;","    border-radius:99px;padding:3px 10px;margin-bottom:7px;letter-spacing:.5px}","  #nl-moldura .video-fake{","    width:100%;aspect-ratio:16/9;background:rgba(0,0,0,.45);border-radius:12px;margin-bottom:11px;","    display:flex;align-items:center;justify-content:center;color:var(--suave);font-size:12px;","    border:1px solid var(--borda);cursor:pointer","  }","  #nl-moldura .video-fake .play{width:46px;height:46px;border-radius:50%;background:var(--grad-neon);color:#04120a;","    display:flex;align-items:center;justify-content:center;font-size:16px;margin-right:10px;","    box-shadow:0 0 20px rgba(198,244,63,.4)}","","  #nl-moldura .form{align-self:flex-start;width:88%;background:var(--vidro-claro);border:1px solid var(--borda);","    border-radius:18px;padding:15px;display:flex;flex-direction:column;gap:10px;animation:surgir .28s ease}","  #nl-moldura .form input{","    background:rgba(0,0,0,.35);border:1px solid var(--borda);border-radius:11px;color:var(--texto);","    padding:12px 14px;font-size:14px;outline:none;font-family:var(--fonte)","  }","  #nl-moldura .form input:focus{border-color:rgba(198,244,63,.6);box-shadow:0 0 12px rgba(198,244,63,.15)}","  #nl-moldura .form .botao{background:var(--grad-neon);color:#04120a;font-weight:700;border:none;border-radius:11px;","    padding:12px;cursor:pointer;font-size:14px;font-family:var(--fonte);","    box-shadow:0 4px 14px rgba(198,244,63,.28), inset 0 1px 0 rgba(255,255,255,.4)}","","  #nl-moldura .digitando{display:flex;gap:4px;align-self:flex-start;background:var(--vidro-claro);","    border:1px solid var(--borda);border-radius:18px 18px 18px 6px;padding:14px 17px}","  #nl-moldura .digitando span{width:7px;height:7px;border-radius:50%;background:var(--neon);opacity:.7;animation:pontinho 1.2s infinite}","  #nl-moldura .digitando span:nth-child(2){animation-delay:.15s}","  #nl-moldura .digitando span:nth-child(3){animation-delay:.3s}","  @keyframes pontinho{0%,60%,100%{opacity:.25;transform:translateY(0)}30%{opacity:1;transform:translateY(-4px)}}","","  /* barra de digitação */","  #nl-moldura .nl-input{","    display:none;align-items:center;gap:10px;padding:10px 12px 12px;flex-shrink:0;","    border-top:1px solid var(--borda);animation:surgir .3s ease;","  }","  #nl-moldura .nl-input.ativa{display:flex}","  #nl-moldura .nl-pill{","    flex:1;display:flex;align-items:center;gap:8px;","    background:rgba(0,0,0,.35);border:1px solid var(--borda);border-radius:99px;","    padding:6px 8px 6px 16px;min-height:46px;transition:border-color .15s ease;","  }","  #nl-moldura .nl-pill:focus-within{border-color:rgba(198,244,63,.5);box-shadow:0 0 14px rgba(198,244,63,.12)}","  #nl-moldura .nl-pill input{","    flex:1;background:transparent;border:none;outline:none;color:var(--texto);","    font-size:15px;font-family:var(--fonte);min-width:0","  }","  #nl-moldura .nl-pill input::placeholder{color:var(--suave)}","  #nl-moldura .nl-icone{","    width:34px;height:34px;border:none;background:transparent;cursor:pointer;","    display:flex;align-items:center;justify-content:center;border-radius:50%;","    transition:background .15s ease;flex-shrink:0","  }","  #nl-moldura .nl-icone:hover{background:rgba(255,255,255,.08)}","  #nl-moldura .nl-icone img{width:19px;height:19px;object-fit:contain;opacity:.85}","  #nl-enviar{","    width:46px;height:46px;border:none;background:transparent;cursor:pointer;padding:0;flex-shrink:0;","    filter:drop-shadow(0 4px 14px rgba(198,244,63,.35));","    transition:transform .15s ease;","  }","  #nl-enviar:hover{transform:scale(1.07)}","  #nl-enviar img{width:100%;height:100%;object-fit:contain}","","  #nl-moldura .pix-codigo{","    font-size:10.5px;color:var(--suave);background:rgba(0,0,0,.35);border:1px solid var(--borda);","    border-radius:8px;padding:8px 10px;margin-bottom:10px;word-break:break-all;text-align:center","  }","  #nl-encerrar{","    display:none;text-align:center;font-size:12.5px;color:#ff6b6b;font-weight:600;background:rgba(255,61,90,.10);letter-spacing:.2px;","    padding:7px;cursor:pointer;border-top:1px solid var(--borda);flex-shrink:0;","    transition:color .15s ease;","  }","  #nl-encerrar:hover{color:var(--rosa)}","  #nl-moldura .nl-rodape{","    padding:0 14px 10px;font-size:10.5px;color:var(--suave);text-align:center;flex-shrink:0","  }",""].join(String.fromCharCode(10));
 document.head.appendChild(est);
 var cx = document.createElement('div');
-cx.innerHTML = ["<div id='nl-teaser' onclick='nlAbrirChat()'>","  <div class='fechar' onclick='event.stopPropagation();nlFecharTeaser()'>x</div>","  <span id='nl-teaser-txt'></span>","</div>","","<button id='nl-bolha' onclick='nlAbrirChat()' aria-label='Abrir chat'>","  <img src='https://i.imgur.com/xfpgEW4.png' alt='Liss'>","</button>","","<div id='nl-moldura'>","<div id='nl-chat'>","  <div class='nl-topo'>","    <img src='https://i.imgur.com/xfpgEW4.png' alt='Liss'>","    <div>","      <div class='nome'>Liss</div>","      <div class='status'>Online agora</div>","    </div>","    <div class='acoes'>","      <button onclick='nlReiniciar()' title='Reiniciar conversa'>R</button>","      <button onclick='nlFecharChat()' title='Minimizar'>_</button>","    </div>","  </div>","  <div id='nl-corpo'></div>","  <div id='nl-encerrar' onclick='nlEncerrar()'>Encerrar atendimento</div>","  <div class='nl-input'>","    <div class='nl-pill'>","      <input id='nl-texto' type='text' placeholder='Digite sua mensagem' maxlength='500'>","      <button class='nl-icone' title='Anexar arquivo' onclick='nlDemoAnexo()'><img src='https://i.imgur.com/520dz0b.png' alt=''></button>","      <button class='nl-icone' title='Enviar áudio' onclick='nlDemoAudio()'><img src='https://i.imgur.com/BAbFWEj.png' alt=''></button>","    </div>","    <button id='nl-enviar' onclick='nlEnviarTexto()' title='Enviar'><img src='https://i.imgur.com/1gFtuSA.png' alt='Enviar'></button>","  </div>","  <div class='nl-rodape'>Atendimento Netliss &middot; <b id='nl-id-visual'></b></div>","</div>","</div>"].join(String.fromCharCode(10));
+cx.innerHTML = ["<div id='nl-teaser' onclick='nlAbrirChat()'>","  <div class='fechar' onclick='event.stopPropagation();nlFecharTeaser()'>x</div>","  <span id='nl-teaser-txt'></span>","</div>","","<button id='nl-bolha' onclick='nlAbrirChat()' aria-label='Abrir chat'>","  <img src='https://i.imgur.com/xfpgEW4.png' alt='Liss'>","</button>","","<div id='nl-moldura'>","<div id='nl-chat'>","  <div class='nl-topo'>","    <img src='https://i.imgur.com/xfpgEW4.png' alt='Liss'>","    <div>","      <div class='nome'>Liss</div>","      <div class='status'>Online agora</div>","    </div>","    <div class='acoes'>","      <button onclick='nlReiniciar()' title='Reiniciar conversa'>R</button>","      <button onclick='nlFecharChat()' title='Minimizar'>_</button>","    </div>","  </div>","  <div id='nl-corpo'></div>","  <div id='nl-encerrar' onclick='nlEncerrar()'>Encerrar atendimento</div>","  <div class='nl-input'>","    <div class='nl-pill'>","      <input id='nl-texto' type='text' placeholder='Digite sua mensagem' maxlength='500'>","      <button class='nl-icone' title='Anexar arquivo' onclick='nlDemoAnexo()'><img src='https://i.imgur.com/520dz0b.png' alt=''></button>","      <button class='nl-icone' title='Enviar áudio' onclick='nlAudio()'><img src='https://i.imgur.com/BAbFWEj.png' alt=''></button>","    </div>","    <button id='nl-enviar' onclick='nlEnviarTexto()' title='Enviar'><img src='https://i.imgur.com/1gFtuSA.png' alt='Enviar'></button>","  </div>","  <div class='nl-rodape'>Atendimento Netliss &middot; <b id='nl-id-visual'></b></div>","</div>","</div>"].join(String.fromCharCode(10));
 document.body.appendChild(cx);
 }
 
@@ -28,7 +28,7 @@ document.body.appendChild(cx);
 var CFG = {
   webhook: "https://hook.us2.make.com/7utigfgghdla4j4loav3fu2leopdwp3o",
   playStore: "https://play.google.com/store/apps/details?id=com.netlissbrasil.pro",
-  videoTeste: "https://www.youtube.com/@netlissbrasil",
+  videoTeste: "https://www.youtube-nocookie.com/embed/3LFpGP8JDh8",
   planos: {
     "BASICO": { id: 6, nome: "Netliss BÁSICO", preco: "R$ 24,90", desc: "Plano mensal · 1 pessoa · Pix" },
     "TOP":    { id: 7, nome: "Netliss TOP", preco: "R$ 59,90", desc: "3 meses · até 2 pessoas · cerca de R$ 9,98 por pessoa/mês" },
@@ -296,11 +296,11 @@ function nlSalvarNome(){
 }
 
 var REGRAS = {
-  "TIM|PRE": { tipo:"ok", texto:"<b>TIM Pré-pago</b> funciona muito bem com a Netliss!<br><br><b>Com saldo válido:</b> conexão perfeita e estável.<br><br><b>Com saldo expirado:</b> ainda funciona, mas com instabilidade — às vezes você vai precisar ativar e desativar o <b>modo avião</b> e testar todas as opções da TIM no aplicativo até conectar.<br><br>E se um dia, com o saldo expirado, o aplicativo só ficar procurando rede e não conectar de jeito nenhum, é o sinal de que chegou a hora de fazer uma recarga." },
-  "TIM|POS": { tipo:"ok", texto:"<b>TIM Pós-pago / Controle</b> funciona muito bem com a Netliss!<br><br>Só existe uma regra de ouro: mantenha os pagamentos da operadora <b>em dia</b>. Se a fatura atrasar, a operadora corta a rota de conexão e o aplicativo para de conectar até você regularizar." },
-  "Vivo|PRE": { tipo:"aviso", texto:"Preciso ser honesta com você: <b>Vivo Pré-pago</b> tem funcionado com muita instabilidade — costuma dar dor de cabeça.<br><br>Você pode fazer o teste grátis e ver como se comporta na sua região, mas prefiro te avisar antes. Se você busca estabilidade de verdade, um chip <b>TIM</b> combina muito melhor. Outra ótima opção é a <b>Intercel</b>: ela tem um plano próprio, de cerca de <b>R$17 por mês</b>, que funciona muito bem com a Netliss." },
-  "Vivo|POS": { tipo:"ok", texto:"<b>Vivo Pós-pago / Controle</b> está funcionando muito bem com a Netliss!<br><br>Só mantenha os pagamentos da operadora em dia: fatura atrasada derruba a rota de conexão e o aplicativo para de conectar até regularizar." },
-  "Claro|PRE": { tipo:"bloqueio", texto:"Como te falei, no <b>Claro Pré-pago</b> a Netliss não funciona — e eu não quero te dar prejuízo nem dor de cabeça.<br><br>A boa notícia: com um chip <b>TIM</b> (pré ou pós) a experiência é excelente. E tem a <b>Intercel</b>, que oferece um plano próprio de cerca de <b>R$17 por mês</b> e combina muito bem com a Netliss." },
+  "TIM|PRE": { tipo:"ok", texto:"<b>TIM Pré-pago</b> funciona muito bem com a Netliss!<br><br><b>Com saldo válido:</b> conexão perfeita e estável.<br><br><b>Com saldo expirado:</b> ainda funciona, mas com instabilidade — às vezes você vai precisar ativar e desativar o <b>modo avião</b> e testar todas as opções da TIM no aplicativo até conectar.<br><br>E se um dia, com o saldo expirado, o aplicativo só ficar procurando uma rede utilizável — mesmo fazendo o modo avião e testando todas as opções da sua operadora — é o sinal de que chegou a hora de fazer uma recarga." },
+  "TIM|POS": { tipo:"ok", texto:"<b>TIM Pós-pago / Controle</b> funciona muito bem com a Netliss!<br><br>Só existe uma regra de ouro: mantenha os pagamentos da operadora <b>em dia</b>. Se a fatura atrasar, a operadora corta a rota de conexão e o aplicativo para de conectar." },
+  "Vivo|PRE": { tipo:"sugestao", texto:"Preciso ser honesta com você: o <b>Vivo Pré-pago</b> tem funcionado com muita dificuldade e costuma dar dor de cabeça.<br><br>Você pode fazer o teste grátis e ver como se comporta na sua região." },
+  "Vivo|POS": { tipo:"ok", texto:"<b>Vivo Pós-pago / Controle</b> funciona muito bem com a Netliss!<br><br>Só mantenha os pagamentos da operadora em dia: fatura atrasada derruba a rota de conexão e o aplicativo para de conectar." },
+  "Claro|PRE": { tipo:"sugestao_dura", texto:"Vou ser direta com você: no <b>Claro Pré-pago</b> a Netliss <b>não funciona</b>, ponto final. Não quero que você gaste seu tempo nem tenha dor de cabeça." },
   "Claro|POS": { tipo:"ok", texto:"Certo! No <b>Claro Pós-pago / Controle</b> dá para usar a Netliss. Só te adianto que a Claro costuma oscilar mais que as outras operadoras — por isso o <b>teste grátis</b> é essencial: você avalia como fica na sua região antes de pagar qualquer coisa.<br><br>E mantenha a fatura em dia: atraso derruba a rota de conexão." },
   "Intercel|PRE": { tipo:"ok", texto:"<b>Intercel</b> funciona muito bem com a Netliss — tanto pré quanto pós-pago!<br><br>Ela usa a rede da Vivo e oferece um <b>plano próprio de cerca de R$17 por mês</b>. Somando com a Netliss, você fica com internet ilimitada gastando pouquíssimo." },
   "Intercel|POS": { tipo:"ok", texto:"<b>Intercel</b> funciona muito bem com a Netliss — tanto pré quanto pós-pago!<br><br>Ela usa a rede da Vivo e oferece um <b>plano próprio de cerca de R$17 por mês</b>. Somando com a Netliss, você fica com internet ilimitada gastando pouquíssimo." }
@@ -341,19 +341,56 @@ function nlAndroidRegras(operadora, mod){
   var r = REGRAS[operadora + "|" + mod];
   nlMsgLiss(r.texto, function(){
     if(r.tipo === "ok"){ nlPassoApp(); }
-    else if(r.tipo === "aviso"){
+    else if(r.tipo === "sugestao"){
       nlChips([
         { rotulo:"Quero testar mesmo assim", acao:nlPassoApp },
+        { rotulo:"Posso dar uma sugestão?", acao:nlSugestaoChip },
+        { rotulo:"Encerrar atendimento", sec:true, acao:nlEncerrar }
+      ]);
+    }
+    else if(r.tipo === "sugestao_dura"){
+      nlChips([
+        { rotulo:"Posso dar uma sugestão?", acao:nlSugestaoChip },
         { rotulo:"Tenho outro chip", acao:nlNovoAndroid },
         { rotulo:"Encerrar atendimento", sec:true, acao:nlEncerrar }
       ]);
-    } else {
+    }
+    else {
       nlChips([
         { rotulo:"Tenho outro chip", acao:nlNovoAndroid },
         { rotulo:"Atendimento", acao:nlIrParaLiss },
         { rotulo:"Encerrar atendimento", sec:true, acao:nlEncerrar }
       ]);
     }
+  });
+}
+function nlSugestaoChip(){
+  nlMsgUser("Pode sugerir");
+  nlMsgLiss("O seu aparelho aceita <b>dois chips</b> (dois números ao mesmo tempo)?", function(){
+    nlChips([
+      { rotulo:"Sim, aceita dois chips", acao:nlSugestaoDoisChips },
+      { rotulo:"Não / não sei", acao:nlSugestaoUmChip }
+    ]);
+  });
+}
+function nlSugestaoDoisChips(){
+  nlMsgUser("Aceita dois chips");
+  nlMsgLiss("Então a melhor saída é adicionar um segundo chip só para a internet, sem perder o seu número atual:<br><br>Um chip <b>TIM</b> (pré ou pós) funciona muito bem com a Netliss. E tem a <b>Intercel</b>, que usa a rede da Vivo e tem um plano próprio de cerca de <b>R$17 por mês</b> — somado à Netliss, fica internet ilimitada gastando pouquíssimo.<br><br>Assim você mantém o seu número e ganha uma internet que funciona de verdade. Quer testar com um chip desses?", function(){
+    nlChips([
+      { rotulo:"Já tenho um desses, testar", acao:nlNovoAndroid },
+      { rotulo:"Falar com suporte", acao:nlIrParaLiss },
+      { rotulo:"Encerrar atendimento", sec:true, acao:nlEncerrar }
+    ]);
+  });
+}
+function nlSugestaoUmChip(){
+  nlMsgUser("Não aceita dois chips");
+  nlMsgLiss("Entendi. Nesse caso, para trocar de operadora você precisaria substituir o seu chip atual — o que significa mudar de número.<br><br>Se um dia decidir migrar, um chip <b>TIM</b> ou <b>Intercel</b> funciona muito bem com a Netliss. Por enquanto, se quiser, você ainda pode fazer o teste grátis para ver como se comporta na sua região.", function(){
+    nlChips([
+      { rotulo:"Quero testar mesmo assim", acao:nlPassoApp },
+      { rotulo:"Tenho outro chip", acao:nlNovoAndroid },
+      { rotulo:"Encerrar atendimento", sec:true, acao:nlEncerrar }
+    ]);
   });
 }
 function nlPassoApp(){
@@ -367,13 +404,11 @@ function nlAposDownload(){
   nlMsgUser("Baixar aplicativo");
   window.open(CFG.playStore, "_blank");
   nlMsgLiss("Baixou? Agora assiste esse vídeo rapidinho — ele mostra <b>como se conectar</b> em menos de 2 minutos. Seu teste é liberado logo depois:", function(){
-    nlCard("<div class='video-fake' onclick='nlAbrirVideo()'><div class='play'>&#9654;</div> Vídeo: como fazer o teste grátis</div>" +
+    nlCard("<div style='position:relative;padding-bottom:56%;height:0;border-radius:12px;overflow:hidden;margin-bottom:11px;border:1px solid rgba(255,255,255,.09)'><iframe src='" + CFG.videoTeste + "' style='position:absolute;top:0;left:0;width:100%;height:100%;border:0' title='Como fazer o teste' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture' allowfullscreen></iframe></div>" +
       "<button class='botao' onclick='nlGerarTeste()'>Já assisti, quero meu teste</button>");
   });
 }
-function nlAbrirVideo(){
-  window.open(CFG.videoTeste, "_blank");
-}
+
 async function nlGerarTeste(){
   nlMsgUser("Já assisti, quero meu teste");
   nlDigitar(async function(){
@@ -404,17 +439,15 @@ function nlNovoIos(){
   nlMsgLiss("No <b>iPhone</b> é bem simples: nossa equipe libera o seu teste grátis pelo <b>WhatsApp</b>, rapidinho e sem custo nenhum.<br><br>Hoje funciona com <b>TIM</b> (pré ou pós-pago) e <b>Vivo Pós-pago</b>. Qual é a sua operadora?", function(){
     nlChips([
       { rotulo:"TIM", acao:function(){ NL.op = "TIM"; nlIosModalidade(); } },
-      { rotulo:"Vivo", acao:nlIosVivo },
-      { rotulo:"Claro", acao:function(){ nlIosIncompativel("a Claro"); } },
-      { rotulo:"Outra", acao:function(){ nlIosIncompativel("essa operadora"); } }
+      { rotulo:"Vivo", acao:nlIosVivo }
     ]);
   });
 }
 function nlIosModalidade(){
   nlMsgLiss("E o seu chip é de qual modalidade?", function(){
     nlChips([
-      { rotulo:"Pré-pago", acao:function(){ NL.mod = "PRE"; nlIosOk(); } },
-      { rotulo:"Pós-pago ou Controle", acao:function(){ NL.mod = "POS"; nlIosOk(); } }
+      { rotulo:"Pré-pago", acao:function(){ NL.mod = "PRE"; nlIosRegras(); } },
+      { rotulo:"Pós-pago ou Controle", acao:function(){ NL.mod = "POS"; nlIosRegras(); } }
     ]);
   });
 }
@@ -422,13 +455,30 @@ function nlIosVivo(){
   NL.op = "Vivo";
   nlMsgLiss("E o seu chip Vivo é de qual modalidade?", function(){
     nlChips([
-      { rotulo:"Pós-pago ou Controle", acao:function(){ NL.mod = "POS"; nlIosOk(); } },
+      { rotulo:"Pós-pago ou Controle", acao:function(){ NL.mod = "POS"; nlIosRegras(); } },
       { rotulo:"Pré-pago", acao:function(){ nlIosIncompativel("Vivo Pré-pago"); } }
     ]);
   });
 }
+function nlIosRegras(){
+  var regra = "";
+  if(NL.op === "TIM" && NL.mod === "PRE"){
+    regra = "No <b>TIM Pré-pago</b>, antes de liberar seu teste é importante você saber como funciona:<br><br><b>Com saldo válido:</b> conexão perfeita e estável.<br><br><b>Com saldo expirado:</b> ainda funciona, mas com instabilidade — às vezes você vai precisar ativar e desativar o <b>modo avião</b> e testar as opções da TIM até conectar. E se o app só ficar procurando rede e não conectar, é sinal de que chegou a hora de recarregar.";
+  } else if(NL.op === "TIM" && NL.mod === "POS"){
+    regra = "No <b>TIM Pós-pago / Controle</b> a conexão é muito boa. Só existe uma regra de ouro: manter os pagamentos da operadora <b>em dia</b>. Se a fatura atrasar, a operadora corta a rota de conexão e o aplicativo para de funcionar até você regularizar.";
+  } else {
+    regra = "No <b>Vivo Pós-pago / Controle</b> a conexão é muito boa. Só mantenha os pagamentos da operadora <b>em dia</b>: fatura atrasada derruba a rota de conexão e o aplicativo para de funcionar até regularizar.";
+  }
+  nlMsgLiss(regra + "<br><br>Tudo certo com essas condições? Posso liberar o seu teste?", function(){
+    nlChips([
+      { rotulo:"Sim, pode liberar", acao:nlIosOk },
+      { rotulo:"Tenho outro chip", acao:nlNovoIos },
+      { rotulo:"Falar com suporte", acao:nlIrParaLiss }
+    ]);
+  });
+}
 function nlIosOk(){
-  nlMsgLiss("Ótimo, funciona no seu chip! Preenche seus dados que nossa equipe te chama no <b>WhatsApp</b> para liberar o seu teste grátis:", function(){
+  nlMsgLiss("Perfeito! Preenche seus dados que nossa equipe te chama no <b>WhatsApp</b> para liberar o seu teste grátis:", function(){
     nlForm("<input id='nl-ios-nome' type='text' placeholder='Seu nome' maxlength='60'>" +
            nlTelHtml("nl-ios") +
            "<button class='botao' onclick='nlEnviarLeadIos()'>Solicitar teste grátis</button>");
@@ -510,7 +560,8 @@ function nlPagarPix(){
   nlDigitar(async function(){
     var p = CFG.planos[NL.planoAtual];
     NL.metodoPg = "pix";
-    var corpo = { acao:"pagamento_criar", metodo:"pix", plan_id: p.id, nome: NL.pgNome, email: NL.pgEmail, cpf: NL.pgCpf };
+    var acaoPg = (NL.modoRenov && NL.contaRenov) ? "pagamento_renovar" : "pagamento_criar";
+    var corpo = { acao: acaoPg, metodo:"pix", plan_id: p.id, nome: NL.pgNome, email: NL.pgEmail, cpf: NL.pgCpf };
     if(NL.modoRenov && NL.contaRenov){ corpo.account_id = NL.contaRenov; }
     var r = await nlApi(corpo);
     if(r && r.success && r.pix){
@@ -562,6 +613,16 @@ function nlIniciarPolling(paymentId, plano){
         ]);
       });
     }
+    if(s.status === "rejected" || s.status === "declined" || s.status === "refused"){
+      clearInterval(NL.pollTimer);
+      nlMsgLiss("A operadora do cartão <b>recusou</b> o pagamento. Isso costuma ser limite, dados digitados errados ou bloqueio do banco — não é problema na Netliss. Quer tentar de novo?", function(){
+        nlChips([
+          { rotulo:"Tentar outro cartão", acao:nlFormDadosCartao },
+          { rotulo:"Pagar com PIX", acao:nlFormPix },
+          { rotulo:"Encerrar atendimento", sec:true, acao:nlEncerrar }
+        ]);
+      });
+    }
     if(s.status === "expired" || s.status === "cancelled"){
       clearInterval(NL.pollTimer);
       nlMsgLiss("O PIX expirou sem pagamento. Sem problema — quer gerar um novo?", function(){
@@ -592,58 +653,145 @@ function nlValidarDadosCartao(){
   NL.pgNome = nome; NL.pgEmail = email; NL.pgCpf = cpf;
   nlMsgUser(nome);
   nlApiFogo({ acao:"nome", nome:nome, email:email });
-  nlPagarCartao();
+  nlFormDadosCartao();
 }
-function nlAcharUrlPagamento(r){
-  var campos = ["checkout_url", "payment_url", "init_point", "card_url", "url"];
-  var fontes = [r, r && r.card, r && r.payment, r && r.dados];
-  for(var f = 0; f < fontes.length; f++){
-    var o = fontes[f];
-    if(!o){ continue; }
-    for(var c = 0; c < campos.length; c++){
-      var v = o[campos[c]];
-      if(v && String(v).indexOf("http") === 0){ return String(v); }
-    }
+function nlFormDadosCartao(){
+  nlMsgLiss("Agora os dados do <b>cartão</b>. Eles são protegidos pelo Mercado Pago — a Netliss não vê nem guarda o número do seu cartão:", function(){
+    nlForm("<input id='nl-cc-num' type='tel' placeholder='Número do cartão' maxlength='19'>" +
+           "<input id='nl-cc-nome' type='text' placeholder='Nome impresso no cartão' maxlength='40'>" +
+           "<input id='nl-cc-val' type='tel' placeholder='Validade (MM/AA)' maxlength='5'>" +
+           "<input id='nl-cc-cvv' type='tel' placeholder='CVV (código de segurança)' maxlength='4'>" +
+           "<button class='botao' onclick='nlTokenizarEPagar()'>Pagar agora</button>");
+  });
+}
+function nlCarregarMp(cb){
+  if(window.MercadoPago){ cb(true); return; }
+  var s = document.createElement("script");
+  s.src = "https://sdk.mercadopago.com/js/v2";
+  s.onload = function(){ cb(true); };
+  s.onerror = function(){ cb(false); };
+  document.head.appendChild(s);
+}
+function nlAcharChave(obj, chave, prof){
+  if(!obj || typeof obj !== "object" || prof > 6){ return null; }
+  if(obj[chave]){ return obj[chave]; }
+  for(var k in obj){
+    var achado = nlAcharChave(obj[k], chave, (prof || 0) + 1);
+    if(achado){ return achado; }
   }
-  return "";
+  return null;
 }
-function nlPagarCartao(){
+function nlTokenizarEPagar(){
+  var num = nlSoNumeros(document.getElementById("nl-cc-num").value);
+  var titular = document.getElementById("nl-cc-nome").value.trim();
+  var val = document.getElementById("nl-cc-val").value.trim();
+  var cvv = nlSoNumeros(document.getElementById("nl-cc-cvv").value);
+  if(num.length < 13){ alert("Confira o número do cartão"); return; }
+  if(titular.length < 5){ alert("Digite o nome impresso no cartão"); return; }
+  var partes = val.split("/");
+  if(partes.length !== 2 && val.length === 4){ partes = [val.substring(0,2), val.substring(2,4)]; }
+  if(partes.length !== 2 || partes[0].length !== 2){ alert("Validade no formato MM/AA"); return; }
+  if(cvv.length < 3){ alert("Confira o CVV"); return; }
+  var mes = partes[0];
+  var ano = partes[1].length === 2 ? "20" + partes[1] : partes[1];
+  nlMsgUser("Cartão final " + num.substring(num.length - 4));
+  nlDigitar(async function(){
+    var m = await nlApi({ acao:"metodos" });
+    var chave = m ? nlAcharChave(m, "mp_public_key", 0) : null;
+    if(!chave){
+      nlMsgLiss("Não consegui iniciar o ambiente seguro do cartão agora. Vamos pelo <b>PIX</b>, que está funcionando perfeitamente?", function(){
+        nlChips([{ rotulo:"Pagar com PIX", acao:nlFormPix }, { rotulo:"Tentar cartão de novo", acao:nlFormDadosCartao }, { rotulo:"Atendimento", acao:nlIrParaLiss }]);
+      });
+      return;
+    }
+    nlCarregarMp(function(carregou){
+      if(!carregou || !window.MercadoPago){
+        nlMsgLiss("O ambiente seguro do cartão não carregou (pode ser bloqueador de anúncios ou conexão). Quer tentar de novo ou ir de PIX?", function(){
+          nlChips([{ rotulo:"Tentar de novo", acao:nlFormDadosCartao }, { rotulo:"Pagar com PIX", acao:nlFormPix }]);
+        });
+        return;
+      }
+      try{
+        var mp = new MercadoPago(chave);
+        mp.createCardToken({
+          cardNumber: num,
+          cardholderName: titular,
+          cardExpirationMonth: mes,
+          cardExpirationYear: ano,
+          securityCode: cvv,
+          identificationType: "CPF",
+          identificationNumber: NL.pgCpf
+        }).then(function(t){
+          if(t && t.id){ nlPagarCartao(t.id); }
+          else { nlErroCartao("não consegui validar os dados do cartão"); }
+        }).catch(function(){
+          nlErroCartao("os dados do cartão não passaram na validação — confere número, validade e CVV");
+        });
+      }catch(e){
+        nlErroCartao("houve um erro ao proteger os dados do cartão");
+      }
+    });
+  }, 300);
+}
+function nlErroCartao(motivo){
+  nlMsgLiss("Opa: " + motivo + ".<br>Vamos tentar de novo?", function(){
+    nlChips([
+      { rotulo:"Tentar novamente", acao:nlFormDadosCartao },
+      { rotulo:"Pagar com PIX", acao:nlFormPix },
+      { rotulo:"Atendimento", acao:nlIrParaLiss }
+    ]);
+  });
+}
+function nlPagarCartao(tokenCartao){
   nlDigitar(async function(){
     var p = CFG.planos[NL.planoAtual];
-    NL.metodoPg = "credit_card";
-    var corpo = { acao:"pagamento_criar", metodo:"credit_card", plan_id: p.id, nome: NL.pgNome, email: NL.pgEmail, cpf: NL.pgCpf };
+    var acaoPg = (NL.modoRenov && NL.contaRenov) ? "pagamento_renovar" : "pagamento_criar";
+    var corpo = { acao: acaoPg, metodo:"credit_card", card_token: tokenCartao, plan_id: p.id, nome: NL.pgNome, email: NL.pgEmail, cpf: NL.pgCpf };
     if(NL.modoRenov && NL.contaRenov){ corpo.account_id = NL.contaRenov; }
+    NL.metodoPg = "credit_card";
     var r = await nlApi(corpo);
-    var urlPg = r ? nlAcharUrlPagamento(r) : "";
-    if(r && r.success && urlPg){
-      NL.urlCartao = urlPg;
-      nlMsgLiss("Tudo certo para o seu <b>" + p.nome + "</b> (" + p.preco + ")!", function(){
-        nlCard("<div class='titulo'>Pagamento com cartão</div>" +
-          "<div class='desc'>Clique no botão abaixo para concluir na página segura do <b>Mercado Pago</b>. Assim que o pagamento for aprovado, eu te aviso <b>aqui mesmo</b> no chat e já te entrego o seu acesso.</div>" +
-          "<button class='botao' style='width:100%' onclick='nlAbrirCheckout()'>Pagar com cartão</button>");
-        nlIniciarPolling(r.payment_id, p);
-      });
-    } else if(r && r.success && r.payment_id){
-      nlMsgLiss("Pagamento do <b>" + p.nome + "</b> iniciado! Assim que for aprovado, eu te aviso <b>aqui mesmo</b> no chat.", function(){
+    if(r && r.success && r.payment_id){
+      nlMsgLiss("Pagamento do <b>" + p.nome + "</b> enviado! Estou aguardando a aprovação da operadora do cartão — costuma levar poucos segundos. Assim que aprovar, te entrego o acesso <b>aqui mesmo</b>.", function(){
         nlIniciarPolling(r.payment_id, p);
       });
     } else {
       var msgErro = (r && r.message) ? nlEscapar(r.message) : "tive uma instabilidade para iniciar o pagamento";
-      nlMsgLiss("Opa: " + msgErro + ".<br>Vamos tentar de novo?", function(){
+      nlErroCartao(msgErro);
+    }
+  }, 400);
+}
+
+// ---------------- JA SOU CLIENTE ----------------
+function nlRecuperarAcesso(){
+  nlMsgUser("Esqueci meu usuário");
+  nlMsgLiss("Sem problema! Me fala o <b>e-mail que você usou na compra</b> que eu reenvio todas as suas credenciais para ele:", function(){
+    nlForm("<input id='nl-rec-email' type='email' placeholder='Seu e-mail da compra' maxlength='80'>" +
+           "<button class='botao' onclick='nlEnviarRecuperacao()'>Recuperar meu acesso</button>");
+  });
+}
+function nlEnviarRecuperacao(){
+  var email = document.getElementById("nl-rec-email").value.trim();
+  if(email.indexOf("@") < 1 || email.indexOf(".") < 3){ alert("Digite um e-mail válido"); return; }
+  nlMsgUser(email);
+  nlDigitar(async function(){
+    var r = await nlApi({ acao:"recuperar", email: email });
+    if(r && r.success){
+      nlMsgLiss("Prontinho! Enviei todas as credenciais vinculadas a esse e-mail para <b>" + nlEscapar(email) + "</b>. Dá uma olhada na caixa de entrada (e no spam também).", function(){
         nlChips([
-          { rotulo:"Tentar novamente", acao:nlFormCartao },
-          { rotulo:"Pagar com PIX", acao:nlFormPix },
-          { rotulo:"Atendimento", acao:nlIrParaLiss }
+          { rotulo:"Recebi, obrigado", acao:nlEncerrar },
+          { rotulo:"Não chegou", acao:nlIrParaLiss }
+        ]);
+      });
+    } else {
+      nlMsgLiss("Não encontrei nenhuma conta vinculada a esse e-mail. Pode ter sido comprado com outro e-mail — quer tentar de novo ou falar com o suporte?", function(){
+        nlChips([
+          { rotulo:"Tentar outro e-mail", acao:nlRecuperarAcesso },
+          { rotulo:"Falar com suporte", acao:nlIrParaLiss }
         ]);
       });
     }
   }, 400);
 }
-function nlAbrirCheckout(){
-  if(NL.urlCartao){ window.open(NL.urlCartao, "_blank"); }
-}
-
-// ---------------- JA SOU CLIENTE ----------------
 function nlFluxoCliente(){
   nlMsgLiss("Que bom te ver de novo!<br>Me fala o seu <b>nome de usuário</b> (o mesmo que você usa no aplicativo):", function(){
     nlForm("<input id='nl-usuario' type='text' placeholder='Seu nome de usuário' maxlength='40'>" +
@@ -922,7 +1070,30 @@ function nlCopiarFallback(v){
   ta.remove();
 }
 function nlDemoAnexo(){ nlSistema("envio de arquivos chega na próxima atualização"); }
-function nlDemoAudio(){ nlSistema("envio de áudio chega na próxima atualização"); }
+function nlAudio(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ nlSistema("este navegador não suporta áudio — digite sua mensagem"); return; }
+  if(NL.gravando && NL.rec){ try{ NL.rec.stop(); }catch(e){} return; }
+  var campo = document.getElementById("nl-texto");
+  NL.rec = new SR();
+  NL.rec.lang = "pt-BR";
+  NL.rec.interimResults = false;
+  NL.rec.maxAlternatives = 1;
+  NL.gravando = true;
+  nlSistema("Gravando... fale a sua mensagem e faça uma pausa para enviar");
+  NL.rec.onresult = function(ev){
+    var txt = "";
+    if(ev.results && ev.results[0] && ev.results[0][0]){ txt = ev.results[0][0].transcript; }
+    if(txt && campo){ campo.value = txt; nlEnviarTexto(); }
+  };
+  NL.rec.onend = function(){ NL.gravando = false; };
+  NL.rec.onerror = function(ev){
+    NL.gravando = false;
+    if(ev.error === "not-allowed"){ nlSistema("permita o uso do microfone para enviar áudio"); }
+    else { nlSistema("não consegui entender o áudio — tenta de novo ou digite"); }
+  };
+  try{ NL.rec.start(); }catch(e){ NL.gravando = false; }
+}
 
 function nlEncerrar(){
   nlBloquearDigitacao();
