@@ -1,0 +1,323 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Netliss Liss Beta",
+  "version": "1.0.0",
+  "description": "Ferramentas do atendimento Netliss (Make)."
+ },
+ "servers": [
+  {
+   "url": "https://hook.us2.make.com"
+  }
+ ],
+ "paths": {
+  "/7utigfgghdla4j4loav3fu2leopdwp3o": {
+   "post": {
+    "operationId": "registrar_nome",
+    "summary": "Registra o nome do cliente na ficha assim que ele disser como se chama.",
+    "parameters": [
+     {
+      "name": "acao",
+      "in": "query",
+      "required": true,
+      "description": "Sempre 'nome'.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "nome"
+       ],
+       "default": "nome"
+      }
+     },
+     {
+      "name": "id_netliss",
+      "in": "query",
+      "required": true,
+      "description": "ID do visitante. Use SEMPRE o valor exato da variável id_netliss do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "nome",
+      "in": "query",
+      "required": true,
+      "description": "Primeiro nome do cliente.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "get": {
+    "operationId": "consultar_conta",
+    "summary": "Consulta a conta de um cliente pelo nome de usuário do app: se existe e quantos dias faltam para vencer.",
+    "parameters": [
+     {
+      "name": "acao",
+      "in": "query",
+      "required": true,
+      "description": "Sempre 'renovacao_busca'.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "renovacao_busca"
+       ],
+       "default": "renovacao_busca"
+      }
+     },
+     {
+      "name": "id_netliss",
+      "in": "query",
+      "required": true,
+      "description": "ID do visitante. Use SEMPRE o valor exato da variável id_netliss do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "usuario",
+      "in": "query",
+      "required": true,
+      "description": "Nome de usuário do app informado pelo cliente.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  },
+  "/illlqngjivaojdjrsruq7h0qxihjq57f": {
+   "post": {
+    "operationId": "gerar_teste",
+    "summary": "Gera usuário e senha do teste grátis de 01 hora. Só use depois de saber operadora e modalidade e de o cliente confirmar que instalou o app. Responde usuario, senha e validade_horas; se vier limite=true, o aparelho já usou os 03 testes.",
+    "parameters": [
+     {
+      "name": "acao",
+      "in": "query",
+      "required": true,
+      "description": "Sempre 'teste'.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "teste"
+       ],
+       "default": "teste"
+      }
+     },
+     {
+      "name": "id_netliss",
+      "in": "query",
+      "required": true,
+      "description": "ID do visitante. Use SEMPRE o valor exato da variável id_netliss do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "fp",
+      "in": "query",
+      "required": false,
+      "description": "Impressão do aparelho. Use SEMPRE o valor exato da variável fp do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "nome",
+      "in": "query",
+      "required": true,
+      "description": "Primeiro nome do cliente.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "operadora",
+      "in": "query",
+      "required": true,
+      "description": "TIM, Vivo ou Claro.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "modalidade",
+      "in": "query",
+      "required": true,
+      "description": "PRE ou POS (controle conta como POS).",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  },
+  "/kazb5kdmxqwivry8ydradfi4yvpag599": {
+   "post": {
+    "operationId": "abrir_chamado",
+    "summary": "Abre chamado interno para a equipe (resposta por e-mail, seg a sex, 9h às 18h). Use quando não souber responder, em problema técnico sem solução, ou para pedidos fora da tabela.",
+    "parameters": [
+     {
+      "name": "acao",
+      "in": "query",
+      "required": true,
+      "description": "Sempre 'chamado_abrir'.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "chamado_abrir"
+       ],
+       "default": "chamado_abrir"
+      }
+     },
+     {
+      "name": "id_netliss",
+      "in": "query",
+      "required": true,
+      "description": "ID do visitante. Use SEMPRE o valor exato da variável id_netliss do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "fp",
+      "in": "query",
+      "required": false,
+      "description": "Impressão do aparelho. Use SEMPRE o valor exato da variável fp do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "nome",
+      "in": "query",
+      "required": true,
+      "description": "Nome do cliente.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "email",
+      "in": "query",
+      "required": true,
+      "description": "E-mail do cliente.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "whatsapp",
+      "in": "query",
+      "required": false,
+      "description": "WhatsApp do cliente.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "usuario",
+      "in": "query",
+      "required": false,
+      "description": "Usuário do app, se houver.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "problema",
+      "in": "query",
+      "required": true,
+      "description": "Resumo claro: o que o cliente quer/precisa + operadora e modalidade.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "fase",
+      "in": "query",
+      "required": false,
+      "description": "novo, teste, cliente ou venda.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  },
+  "/3wv4hhwgvnus5a83etltcdm7mghqup2c": {
+   "post": {
+    "operationId": "recuperar_acesso",
+    "summary": "Reenvia por e-mail o acesso de quem comprou pelo site informando e-mail. Precisa do e-mail da compra e da data da compra (DD/MM/AAAA).",
+    "parameters": [
+     {
+      "name": "acao",
+      "in": "query",
+      "required": true,
+      "description": "Sempre 'recuperar'.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "recuperar"
+       ],
+       "default": "recuperar"
+      }
+     },
+     {
+      "name": "id_netliss",
+      "in": "query",
+      "required": true,
+      "description": "ID do visitante. Use SEMPRE o valor exato da variável id_netliss do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "email",
+      "in": "query",
+      "required": true,
+      "description": "E-mail usado na compra.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "data_compra",
+      "in": "query",
+      "required": true,
+      "description": "Data da compra no formato DD/MM/AAAA.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  }
+ }
+}
