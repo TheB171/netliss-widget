@@ -3605,3 +3605,24 @@ function nlLissAcoes(acoes, fim){
   if(acoes.indexOf("AFILIADO") > -1){ nlLiberarDigitacao(); nlAfInicio(); return; }
   if(fim){ nlLissFim(); } else { nlLiberarDigitacao(); }
 }
+
+// ===== Liss: "Liss está digitando..." no lugar dos três pontinhos =====
+(function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .nl-dig{display:inline-flex;align-items:center;gap:6px;margin:4px 0 8px;padding:9px 14px;border-radius:16px;background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.09);color:#cfd5e6;font-size:13.5px;font-style:italic}#nl-chat .nl-dig i{display:inline-block;width:5px;height:5px;border-radius:50%;background:#c6ff3d;opacity:.3;animation:nlDig 1.2s infinite}#nl-chat .nl-dig i:nth-child(2){animation-delay:.2s}#nl-chat .nl-dig i:nth-child(3){animation-delay:.4s}@keyframes nlDig{0%,100%{opacity:.25}50%{opacity:1}}"; document.head.appendChild(st); }catch(e){} })();
+function nlEsperaLigar(){
+  if(NL.silencioso || !NL.corpo){ return; }
+  nlEsperaDesligar();
+  var t = document.createElement("div");
+  t.className = "nl-dig";
+  t.id = "nl-espera";
+  t.innerHTML = "<span class='nl-dig-txt'>Liss está digitando</span><i></i><i></i><i></i>";
+  NL.corpo.appendChild(t);
+  nlRolar();
+  NL.esperaTimer = setTimeout(function(){
+    var s = document.querySelector("#nl-espera .nl-dig-txt");
+    if(s){ s.textContent = "Liss está digitando, só um instante"; }
+  }, 9000);
+}
+function nlEsperaDesligar(){
+  try{ clearTimeout(NL.esperaTimer); }catch(e){}
+  try{ var t = document.getElementById("nl-espera"); if(t){ t.remove(); } }catch(e){}
+}
