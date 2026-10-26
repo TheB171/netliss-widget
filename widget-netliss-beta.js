@@ -3577,15 +3577,16 @@ function nlLissPagamento(resp){
   if(p.valor || q.valor || c.valor){ NL.pag = { pix: p.valor, qr: q.valor, cartao: c.valor }; }
   return resp;
 }
-function nlCopiarPix(btn){
-  var v = NL.pag && NL.pag.pix; if(!v){ return; }
+function nlLissCopiarPix(btn){
+  var v = NL.lissPix; if(!v){ return; }
   var ok = function(){ if(btn){ btn.textContent = "Código Pix copiado!"; setTimeout(function(){ btn.textContent = "Copiar código Pix (copia e cola)"; }, 2000); } };
   if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(String(v)).then(ok, function(){ nlCopiarFallback(v); ok(); }); } else { nlCopiarFallback(v); ok(); }
 }
 function nlLissCardPagamento(){
   var g = NL.pag; if(!g){ return; }
+  if(g.pix){ NL.lissPix = g.pix; }
   var h = "<div class='titulo'>Pagamento seguro pelo Mercado Pago</div>";
-  if(g.pix){ h += "<button class='botao' style='width:100%;margin:8px 0' data-vivo='1' onclick='nlCopiarPix(this)'>Copiar código Pix (copia e cola)</button>"; }
+  if(g.pix){ h += "<button class='botao' style='width:100%;margin:8px 0' data-vivo='1' onclick='nlLissCopiarPix(this)'>Copiar código Pix (copia e cola)</button>"; }
   if(g.qr && /^https:\/\//.test(g.qr)){ h += "<a class='botao' style='display:block;text-align:center;width:100%;margin-bottom:8px;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none;text-decoration:none' href='" + g.qr.replace(/'/g, "%27") + "' target='_blank' rel='noopener'>Ver QR Code do Pix</a>"; }
   if(g.cartao && /^https:\/\//.test(g.cartao)){ h += "<a class='botao' style='display:block;text-align:center;width:100%;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none;text-decoration:none' href='" + g.cartao.replace(/'/g, "%27") + "' target='_blank' rel='noopener'>Pagar com cartão</a>"; }
   nlCard(h);
