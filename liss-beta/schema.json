@@ -318,6 +318,133 @@
      }
     }
    }
+  },
+  "/dm9cplrlpx5r5fd7aazeztamiuscfbeg": {
+   "post": {
+    "operationId": "gerar_cobranca",
+    "summary": "Gera a cobrança do plano escolhido (Pix copia e cola + link de cartão do Mercado Pago, sem CPF). Use só depois do teste conectado e com pessoas, prazo e e-mail confirmados. Responde ok, ref, valor, plano, pix_copia_e_cola, link_pix e link_cartao.",
+    "parameters": [
+     {
+      "name": "acao",
+      "in": "query",
+      "required": true,
+      "description": "Sempre 'cobrar'.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "cobrar"
+       ],
+       "default": "cobrar"
+      }
+     },
+     {
+      "name": "id_netliss",
+      "in": "query",
+      "required": true,
+      "description": "ID do visitante. Use SEMPRE o valor exato da variável id_netliss do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "nome",
+      "in": "query",
+      "required": true,
+      "description": "Primeiro nome do cliente.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "email",
+      "in": "query",
+      "required": true,
+      "description": "E-mail do cliente (onde recebe o acesso).",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "pessoas",
+      "in": "query",
+      "required": true,
+      "description": "Quantidade de acessos: 1 a 5.",
+      "schema": {
+       "type": "integer"
+      }
+     },
+     {
+      "name": "dias",
+      "in": "query",
+      "required": true,
+      "description": "30 (30 dias), 90 (03 meses) ou 365 (01 ano).",
+      "schema": {
+       "type": "integer",
+       "enum": [
+        30,
+        90,
+        365
+       ]
+      }
+     },
+     {
+      "name": "renovar",
+      "in": "query",
+      "required": false,
+      "description": "Usuário do app a renovar. Deixe vazio quando for compra nova.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   },
+   "get": {
+    "operationId": "consultar_pagamento",
+    "summary": "Consulta se a cobrança (pelo ref) foi paga e, se o acesso já foi criado, devolve usuário e senha.",
+    "parameters": [
+     {
+      "name": "acao",
+      "in": "query",
+      "required": true,
+      "description": "Sempre 'status'.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "status"
+       ],
+       "default": "status"
+      }
+     },
+     {
+      "name": "id_netliss",
+      "in": "query",
+      "required": true,
+      "description": "ID do visitante. Use SEMPRE o valor exato da variável id_netliss do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "ref",
+      "in": "query",
+      "required": true,
+      "description": "O ref devolvido por gerar_cobranca.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
   }
  }
 }

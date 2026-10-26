@@ -3517,6 +3517,7 @@ async function nlLissResponder(txt){
     var tag = "[ACAO:" + marcas[m] + "]";
     if(resp.indexOf(tag) > -1){ acoes.push(marcas[m]); resp = resp.split(tag).join("").trim(); }
   }
+  resp = nlLissPagamento(resp);
   nlLissCredenciais(resp);
   var blocos = resp.split(String.fromCharCode(10) + String.fromCharCode(10));
   var i = 0;
@@ -3562,7 +3563,36 @@ function nlLissVideosRot(){
       "<button class='botao' style='width:100%;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none' data-vivo='1' onclick='nlVideoGrande(" + (_v + 1) + ")'>Ver em tela maior</button>");
   }
 }
+function nlLissTag(resp, nome){
+  var a = resp.indexOf("[" + nome + "]"), b = resp.indexOf("[/" + nome + "]");
+  if(a < 0 || b < a){ return { resp: resp, valor: "" }; }
+  var valor = resp.substring(a + nome.length + 2, b).trim();
+  valor = valor.replace(/^\[?(https?:[^\]\s)]+)\]?(\(.*\))?$/, "$1");
+  return { resp: (resp.substring(0, a) + resp.substring(b + nome.length + 3)).trim(), valor: valor };
+}
+function nlLissPagamento(resp){
+  var p = nlLissTag(resp, "PIX"); resp = p.resp;
+  var q = nlLissTag(resp, "LINKPIX"); resp = q.resp;
+  var c = nlLissTag(resp, "LINKCARTAO"); resp = c.resp;
+  if(p.valor || q.valor || c.valor){ NL.pag = { pix: p.valor, qr: q.valor, cartao: c.valor }; }
+  return resp;
+}
+function nlCopiarPix(btn){
+  var v = NL.pag && NL.pag.pix; if(!v){ return; }
+  var ok = function(){ if(btn){ btn.textContent = "Código Pix copiado!"; setTimeout(function(){ btn.textContent = "Copiar código Pix (copia e cola)"; }, 2000); } };
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(String(v)).then(ok, function(){ nlCopiarFallback(v); ok(); }); } else { nlCopiarFallback(v); ok(); }
+}
+function nlLissCardPagamento(){
+  var g = NL.pag; if(!g){ return; }
+  var h = "<div class='titulo'>Pagamento seguro pelo Mercado Pago</div>";
+  if(g.pix){ h += "<button class='botao' style='width:100%;margin:8px 0' data-vivo='1' onclick='nlCopiarPix(this)'>Copiar código Pix (copia e cola)</button>"; }
+  if(g.qr && /^https:\/\//.test(g.qr)){ h += "<a class='botao' style='display:block;text-align:center;width:100%;margin-bottom:8px;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none;text-decoration:none' href='" + g.qr.replace(/'/g, "%27") + "' target='_blank' rel='noopener'>Ver QR Code do Pix</a>"; }
+  if(g.cartao && /^https:\/\//.test(g.cartao)){ h += "<a class='botao' style='display:block;text-align:center;width:100%;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none;text-decoration:none' href='" + g.cartao.replace(/'/g, "%27") + "' target='_blank' rel='noopener'>Pagar com cartão</a>"; }
+  nlCard(h);
+  NL.pag = null;
+}
 function nlLissAcoes(acoes, fim){
+  nlLissCardPagamento();
   if(NL.lissCopiar){
     NL.lissCopiar = false;
     nlCard("<button class='botao' style='width:100%;margin-bottom:8px' data-vivo='1' onclick='nlCopiarCred(0, this)'>Copiar usuário</button><button class='botao' style='width:100%' data-vivo='1' onclick='nlCopiarCred(1, this)'>Copiar senha</button>");
