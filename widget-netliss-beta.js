@@ -3361,7 +3361,6 @@ function nlBootWidget(){
 // ================================================================
 //  BETA: Liss conversando pelo Dify (mesma cara do chat oficial)
 // ================================================================
-CFG.ttlTicket = 172800000;
 var NL_DIFY = { base: "https://atendimento.netliss.com", code: "crQaCrMQQJN6fDfU", tok: null, tokEm: 0 };
 function nlMdHtml(txt){
   var NLc = String.fromCharCode(10);
@@ -3534,7 +3533,7 @@ function nlVoltarAoMenu(){ nlLiberarDigitacao(); }
 function nlOcioso(){
   var v = nlLer("netliss_visto");
   if(!v){ return false; }
-  return (Date.now() - v) > 172800000;
+  return (Date.now() - v) > 86400000;
 }
 function nlLissValorApos(txt, rotulo){
   var a = txt.indexOf(rotulo);
