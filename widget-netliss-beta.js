@@ -3402,7 +3402,8 @@ async function nlDifyPergunta(texto){
   var tok = await nlDifyToken();
   var fp = "";
   try{ fp = await nlFpPronto(1500); }catch(e){}
-  var corpo = { inputs: { id_netliss: NL.clientId || "", fp: fp || "" }, query: texto, response_mode: "streaming", conversation_id: NL.difyConv || "" };
+  var _f = nlFichaLer();
+  var corpo = { inputs: { id_netliss: NL.clientId || "", fp: fp || "", nome: _f.nome || NL.nome || "", operadora: _f.op || NL.op || "", modalidade: _f.mod || NL.mod || "", usuario: _f.usuario || NL.usuarioApp || "", testou: (_f.testou ? "sim" : "") }, query: texto, response_mode: "streaming", conversation_id: NL.difyConv || "" };
   var r = await fetch(NL_DIFY.base + "/api/chat-messages", { method: "POST", headers: { "X-App-Passport": tok, "X-App-Code": NL_DIFY.code, "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
   if(r.status === 404 && NL.difyConv){ NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto); }
   if(r.status >= 400){ throw new Error("dify " + r.status); }
@@ -3418,15 +3419,49 @@ async function nlDifyPergunta(texto){
   }
   return resp.trim();
 }
+function nlLissLayout(){
+  try{
+    var enc = document.getElementById("nl-encerrar"), inp = document.querySelector("#nl-moldura .nl-input");
+    if(enc && inp && inp.nextElementSibling !== enc){ enc.parentNode.insertBefore(inp, enc); }
+    if(enc){ enc.style.margin = "2px 14px 10px"; }
+  }catch(e){}
+}
+function nlLissSaudacao(){
+  var f = nlFichaLer();
+  var nome = f.nome || NL.nome || "";
+  var lista;
+  if(nome){
+    lista = ["Oi, <b>" + nlEscapar(nome) + "</b>! Que bom te ver de novo 😊<br><br>Como posso te ajudar hoje?",
+             "Olá, <b>" + nlEscapar(nome) + "</b>! Jesus te abençoe 🙏 Que alegria você por aqui de novo!<br><br>Em que posso te ajudar?",
+             "Oi, <b>" + nlEscapar(nome) + "</b>, tudo bem? 😊 Sou eu, a Liss!<br><br>Me conta, como posso te ajudar hoje?"];
+  } else {
+    lista = ["Olá! Jesus te abençoe! Eu sou a <b>Liss</b>, da Netliss 😊<br><br>Como você se chama?",
+             "Oi! Seja bem-vindo(a) à Netliss 😊 Eu sou a <b>Liss</b>.<br><br>Antes de tudo, qual é o seu nome?",
+             "Olá, tudo bem? Aqui é a <b>Liss</b>, da Netliss 🙏<br><br>Como posso te chamar?",
+             "Oi! Que bom ter você aqui 😊 Eu sou a <b>Liss</b> e vou te ajudar no que precisar.<br><br>Qual é o seu nome?"];
+  }
+  return lista[Math.floor(Math.random() * lista.length)];
+}
 function nlInicio(origem){
   NL.pulouFicha = true;
+  NL.encerrado = false;
+  NL.qtdMsgs = 0;
   nlGarantirTicket();
-  nlMsgLiss("Olá! Jesus te abençoe! Eu sou a <b>Liss</b>, da Netliss 😊<br><br>Como você se chama?", function(){
+  nlLissLayout();
+  NL.modoChamado = "problema";
+  nlMsgLiss(nlLissSaudacao(), function(){
     nlLiberarDigitacao();
   });
 }
+function nlLiberarDigitacao(){
+  nlLissLayout();
+  NL.modoChamado = "problema";
+  document.querySelector("#nl-moldura .nl-input").classList.add("ativa");
+  document.getElementById("nl-encerrar").style.display = "block";
+  setTimeout(function(){ try{ document.getElementById("nl-texto").focus(); }catch(e){} }, 350);
+}
 function nlEnviarTexto(){
-  if(NL.aguardando){ return; }
+  if(NL.aguardando || NL.encerrado){ return; }
   var campo = document.getElementById("nl-texto");
   var txt = campo.value.trim();
   if(!txt){ return; }
@@ -3439,7 +3474,45 @@ function nlEnviarTexto(){
   nlRolar();
   nlHistPush("cliente", nlEscapar(txt));
   nlApiFogo({ acao:"msg", ticket_id: NL.ticket, autor:"cliente", mensagem: txt });
+  NL.qtdMsgs = (NL.qtdMsgs || 0) + 1;
+  if(NL.qtdMsgs > 40){
+    nlMsgLiss("Para eu continuar te ajudando direitinho, vou encerrar este atendimento por aqui. Se precisar, é só abrir um novo 😊", function(){ nlLissFim(); });
+    return;
+  }
   nlLissResponder(txt);
+}
+function nlLissFicha(resp){
+  var a = resp.indexOf("[FICHA");
+  if(a < 0){ return resp; }
+  var b = resp.indexOf("]", a);
+  if(b < 0){ return resp.substring(0, a); }
+  var miolo = resp.substring(a + 6, b).trim();
+  var partes = miolo.split(";"), dados = {};
+  var mapa = { nome:"nome", operadora:"op", modalidade:"mod", usuario:"usuario", testou:"testou", nota:"nota", comprou:"comprou", plano:"plano" };
+  for(var i = 0; i < partes.length; i++){
+    var kv = partes[i].split("=");
+    if(kv.length < 2){ continue; }
+    var k = kv[0].trim().toLowerCase(), v = kv.slice(1).join("=").trim();
+    if(mapa[k] && v){ dados[mapa[k]] = v.substring(0, 160); }
+  }
+  if(dados.nome){ NL.nome = dados.nome.split(" ")[0]; }
+  if(dados.usuario){ NL.usuarioApp = dados.usuario; }
+  if(dados.nota){ var f = nlFichaLer(); var antigas = f.nota ? String(f.nota) : ""; if(antigas.indexOf(dados.nota) < 0){ dados.nota = (antigas ? antigas + " | " : "") + dados.nota; } dados.nota = dados.nota.slice(-400); }
+  nlFichaGravar(dados);
+  return (resp.substring(0, a) + resp.substring(b + 1)).trim();
+}
+function nlLissFim(){
+  NL.fimAgendado = 0; NL.pedindoEncerrar = false; NL.modoChamado = null;
+  try{ nlEnviarRegistro(); }catch(e){}
+  nlLimparChips();
+  nlBloquearDigitacao();
+  if(NL.ticket){ nlApiFogo({ acao: "ticket_fechar", ticket_id: NL.ticket }); }
+  NL.ticket = null; NL.difyConv = null;
+  try{ localStorage.removeItem("netliss_ticket"); }catch(e){}
+  NL.encerrado = true;
+  try{ nlEstadoSalvar(); }catch(e){}
+  nlChips([{ rotulo:"Novo atendimento", sec:true, acao:nlReiniciar }]);
+  var _e = document.getElementById("nl-encerrar"); if(_e){ _e.style.display = "none"; }
 }
 async function nlLissResponder(txt){
   nlTravar(true);
@@ -3450,10 +3523,13 @@ async function nlLissResponder(txt){
   nlEsperaDesligar();
   nlTravar(false);
   if(!resp){ nlMsgLiss(NL_INSTAB); nlLiberarDigitacao(); return; }
+  resp = nlLissFicha(resp);
+  var fim = resp.indexOf("[ENCERRAR]") > -1;
+  resp = resp.split("[ENCERRAR]").join("").trim();
   var blocos = resp.split(String.fromCharCode(10) + String.fromCharCode(10));
   var i = 0;
   var proximo = function(){
-    if(i >= blocos.length){ nlLiberarDigitacao(); return; }
+    if(i >= blocos.length){ if(fim){ nlLissFim(); } else { nlLiberarDigitacao(); } return; }
     var b = blocos[i++].trim();
     if(!b){ proximo(); return; }
     nlMsgLiss(nlMdHtml(b), proximo);
