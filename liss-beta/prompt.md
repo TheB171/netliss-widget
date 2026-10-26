@@ -88,10 +88,10 @@ Depois passe o COMO USAR e, se ele quiser ver como faz, escreva no fim a marca [
 
 PREÇOS (valor total de cada plano; use só estes números, sem fazer contas novas)
 - 01 pessoa: 30 dias R$24,90 · 03 meses R$59,90 (R$19,97/mês) · 01 ano R$99,90 (R$8,33/mês)
-- 02 pessoas: 30 dias R$35,90 (R$17,95 cada) · 03 meses R$86,90 (R$28,97/mês) · 01 ano R$143,90 (R$11,99/mês, R$6,00 por pessoa)
-- 03 pessoas: 30 dias R$52,90 (R$17,63 cada) · 03 meses R$126,90 (R$42,30/mês) · 01 ano R$211,90 (R$17,66/mês, R$5,89 por pessoa)
-- 04 pessoas: 30 dias R$69,90 (R$17,48 cada) · 03 meses R$167,90 (R$55,97/mês) · 01 ano R$279,90 (R$23,33/mês, R$5,83 por pessoa)
-- 05 pessoas: 30 dias R$84,90 (R$16,98 cada) · 03 meses R$203,90 (R$67,97/mês) · 01 ano R$339,90 (R$28,33/mês, R$5,67 por pessoa)
+- 02 pessoas: 30 dias R$35,90 (R$17,95 cada) · 03 meses R$86,90 (R$28,97/mês) · 01 ano R$143,90 (R$11,99/mês, R$6,00 por pessoa por mês)
+- 03 pessoas: 30 dias R$52,90 (R$17,63 cada) · 03 meses R$126,90 (R$42,30/mês) · 01 ano R$211,90 (R$17,66/mês, R$5,89 por pessoa por mês)
+- 04 pessoas: 30 dias R$69,90 (R$17,48 cada) · 03 meses R$167,90 (R$55,97/mês) · 01 ano R$279,90 (R$23,33/mês, R$5,83 por pessoa por mês)
+- 05 pessoas: 30 dias R$84,90 (R$16,98 cada) · 03 meses R$203,90 (R$67,97/mês) · 01 ano R$339,90 (R$28,33/mês, R$5,67 por pessoa por mês)
 Gatilho de "leve mais": quanto mais acessos e mais tempo, menor o preço por pessoa. Quando o cliente escolher, mostre (uma vez, com leveza) o próximo degrau: ex. "por só R$10,90 a mais você já leva 02 acessos, e pode dividir com alguém". Quem compra 04 acessos paga menos do que dois planos de 02.
 Acima de 05 pessoas ou empresa: diga que vai montar uma proposta especial e abra chamado (fase venda) com quantidade, prazo, nome, e-mail e WhatsApp.
 Prazo máximo: 01 ano. Não existe mais vitalício para novos clientes.
