@@ -3361,6 +3361,7 @@ function nlBootWidget(){
 // ================================================================
 //  BETA: Liss conversando pelo Dify (mesma cara do chat oficial)
 // ================================================================
+CFG.ttlTicket = 172800000;
 var NL_DIFY = { base: "https://atendimento.netliss.com", code: "crQaCrMQQJN6fDfU", tok: null, tokEm: 0 };
 function nlMdHtml(txt){
   var NLc = String.fromCharCode(10);
@@ -3402,8 +3403,7 @@ async function nlDifyPergunta(texto){
   var tok = await nlDifyToken();
   var fp = "";
   try{ fp = await nlFpPronto(1500); }catch(e){}
-  var _f = nlFichaLer();
-  var corpo = { inputs: { id_netliss: NL.clientId || "", fp: fp || "", nome: _f.nome || NL.nome || "", operadora: _f.op || NL.op || "", modalidade: _f.mod || NL.mod || "", usuario: _f.usuario || NL.usuarioApp || "", testou: (_f.testou ? "sim" : "") }, query: texto, response_mode: "streaming", conversation_id: NL.difyConv || "" };
+  var corpo = { inputs: { id_netliss: NL.clientId || "", fp: fp || "" }, query: texto, response_mode: "streaming", conversation_id: NL.difyConv || "" };
   var r = await fetch(NL_DIFY.base + "/api/chat-messages", { method: "POST", headers: { "X-App-Passport": tok, "X-App-Code": NL_DIFY.code, "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
   if(r.status === 404 && NL.difyConv){ NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto); }
   if(r.status >= 400){ throw new Error("dify " + r.status); }
@@ -3427,19 +3427,10 @@ function nlLissLayout(){
   }catch(e){}
 }
 function nlLissSaudacao(){
-  var f = nlFichaLer();
-  var nome = f.nome || NL.nome || "";
-  var lista;
-  if(nome){
-    lista = ["Oi, <b>" + nlEscapar(nome) + "</b>! Que bom te ver de novo 😊<br><br>Como posso te ajudar hoje?",
-             "Olá, <b>" + nlEscapar(nome) + "</b>! Jesus te abençoe 🙏 Que alegria você por aqui de novo!<br><br>Em que posso te ajudar?",
-             "Oi, <b>" + nlEscapar(nome) + "</b>, tudo bem? 😊 Sou eu, a Liss!<br><br>Me conta, como posso te ajudar hoje?"];
-  } else {
-    lista = ["Olá! Jesus te abençoe! Eu sou a <b>Liss</b>, da Netliss 😊<br><br>Como você se chama?",
-             "Oi! Seja bem-vindo(a) à Netliss 😊 Eu sou a <b>Liss</b>.<br><br>Antes de tudo, qual é o seu nome?",
-             "Olá, tudo bem? Aqui é a <b>Liss</b>, da Netliss 🙏<br><br>Como posso te chamar?",
-             "Oi! Que bom ter você aqui 😊 Eu sou a <b>Liss</b> e vou te ajudar no que precisar.<br><br>Qual é o seu nome?"];
-  }
+  var lista = ["Olá! Jesus te abençoe! Eu sou a <b>Liss</b>, da Netliss 😊<br><br>Como você se chama?",
+               "Oi! Seja bem-vindo(a) à Netliss 😊 Eu sou a <b>Liss</b>.<br><br>Antes de tudo, qual é o seu nome?",
+               "Olá, tudo bem? Aqui é a <b>Liss</b>, da Netliss 🙏<br><br>Como posso te chamar?",
+               "Oi! Que bom ter você aqui 😊 Eu sou a <b>Liss</b> e vou te ajudar no que precisar.<br><br>Qual é o seu nome?"];
   return lista[Math.floor(Math.random() * lista.length)];
 }
 function nlInicio(origem){
@@ -3474,11 +3465,6 @@ function nlEnviarTexto(){
   nlRolar();
   nlHistPush("cliente", nlEscapar(txt));
   nlApiFogo({ acao:"msg", ticket_id: NL.ticket, autor:"cliente", mensagem: txt });
-  NL.qtdMsgs = (NL.qtdMsgs || 0) + 1;
-  if(NL.qtdMsgs > 40){
-    nlMsgLiss("Para eu continuar te ajudando direitinho, vou encerrar este atendimento por aqui. Se precisar, é só abrir um novo 😊", function(){ nlLissFim(); });
-    return;
-  }
   nlLissResponder(txt);
 }
 function nlLissFicha(resp){
@@ -3526,10 +3512,17 @@ async function nlLissResponder(txt){
   resp = nlLissFicha(resp);
   var fim = resp.indexOf("[ENCERRAR]") > -1;
   resp = resp.split("[ENCERRAR]").join("").trim();
+  var acoes = [];
+  var marcas = ["AFILIADO", "VIDEO_TESTE", "VIDEOS_ROTEAMENTO"];
+  for(var m = 0; m < marcas.length; m++){
+    var tag = "[ACAO:" + marcas[m] + "]";
+    if(resp.indexOf(tag) > -1){ acoes.push(marcas[m]); resp = resp.split(tag).join("").trim(); }
+  }
+  nlLissCredenciais(resp);
   var blocos = resp.split(String.fromCharCode(10) + String.fromCharCode(10));
   var i = 0;
   var proximo = function(){
-    if(i >= blocos.length){ if(fim){ nlLissFim(); } else { nlLiberarDigitacao(); } return; }
+    if(i >= blocos.length){ nlLissAcoes(acoes, fim); return; }
     var b = blocos[i++].trim();
     if(!b){ proximo(); return; }
     nlMsgLiss(nlMdHtml(b), proximo);
@@ -3538,3 +3531,47 @@ async function nlLissResponder(txt){
 }
 function nlVoltarAoMenu(){ nlLiberarDigitacao(); }
 (function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.liss a.nl-link{color:#c6ff3d;font-weight:600;text-decoration:underline;word-break:break-word}"; document.head.appendChild(st); }catch(e){} })();
+function nlOcioso(){
+  var v = nlLer("netliss_visto");
+  if(!v){ return false; }
+  return (Date.now() - v) > 172800000;
+}
+function nlLissValorApos(txt, rotulo){
+  var a = txt.indexOf(rotulo);
+  if(a < 0){ return ""; }
+  var resto = txt.substring(a + rotulo.length).split("*").join("").trim();
+  var fim = resto.length;
+  var paradas = [String.fromCharCode(10), " ", "<"];
+  for(var i = 0; i < paradas.length; i++){ var p = resto.indexOf(paradas[i]); if(p > -1 && p < fim){ fim = p; } }
+  return resto.substring(0, fim).trim();
+}
+function nlLissCredenciais(txt){
+  var u = nlLissValorApos(txt, "Usuário:"), sh = nlLissValorApos(txt, "Senha:");
+  if(u && sh && u.length >= 4 && sh.length >= 4){ NL.copiaUser = u; NL.copiaSenha = sh; NL.lissCopiar = true; nlFichaGravar({ testou: 1, testeEm: Date.now() }); }
+}
+function nlLissCopiarU(){ nlCopiarCred(0); }
+function nlLissCopiarS(){ nlCopiarCred(1); }
+function nlLissVideoTeste(){
+  nlCard("<div style='position:relative;padding-bottom:56%;height:0;border-radius:12px;overflow:hidden;margin-bottom:11px;border:1px solid rgba(255,255,255,.09)'><iframe src='" + CFG.videoTeste + "' style='position:absolute;top:0;left:0;width:100%;height:100%;border:0' title='Como fazer o teste' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' referrerpolicy='strict-origin-when-cross-origin' allowfullscreen></iframe></div>" +
+    "<button class='botao' style='width:100%;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none' data-vivo='1' onclick='nlVideoGrande()'>Ver em tela maior</button>");
+}
+function nlLissVideosRot(){
+  var _tit = ["Configurar o celular que vai rotear", "Conectar de outro celular", "Conectar de um notebook"];
+  for(var _v = 0; _v < _tit.length; _v++){
+    nlCard("<div class='titulo'>" + _tit[_v] + "</div>" +
+      "<div style='position:relative;padding-bottom:56%;height:0;border-radius:12px;overflow:hidden;margin:8px 0 11px;border:1px solid rgba(255,255,255,.09)'><iframe src='" + CFG.videosRot[_v] + "' loading='lazy' style='position:absolute;top:0;left:0;width:100%;height:100%;border:0' title='" + _tit[_v] + "' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' referrerpolicy='strict-origin-when-cross-origin' allowfullscreen></iframe></div>" +
+      "<button class='botao' style='width:100%;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none' data-vivo='1' onclick='nlVideoGrande(" + (_v + 1) + ")'>Ver em tela maior</button>");
+  }
+}
+function nlLissAcoes(acoes, fim){
+  if(NL.lissCopiar){
+    NL.lissCopiar = false;
+    nlCard("<button class='botao' style='width:100%;margin-bottom:8px' data-vivo='1' onclick='nlCopiarCred(0, this)'>Copiar usuário</button><button class='botao' style='width:100%' data-vivo='1' onclick='nlCopiarCred(1, this)'>Copiar senha</button>");
+  }
+  for(var i = 0; i < acoes.length; i++){
+    if(acoes[i] === "VIDEO_TESTE"){ nlLissVideoTeste(); }
+    if(acoes[i] === "VIDEOS_ROTEAMENTO"){ nlLissVideosRot(); }
+  }
+  if(acoes.indexOf("AFILIADO") > -1){ nlLiberarDigitacao(); nlAfInicio(); return; }
+  if(fim){ nlLissFim(); } else { nlLiberarDigitacao(); }
+}
