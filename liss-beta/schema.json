@@ -322,7 +322,7 @@
   "/dm9cplrlpx5r5fd7aazeztamiuscfbeg": {
    "post": {
     "operationId": "gerar_cobranca",
-    "summary": "Gera a cobrança do plano escolhido (Pix copia e cola + link de cartão do Mercado Pago, sem CPF). Use só depois do teste conectado e com pessoas, prazo e e-mail confirmados. Responde ok, ref, valor, plano, pix_copia_e_cola, link_pix e link_cartao.",
+    "summary": "Gera a cobrança do plano na forma que o cliente escolheu (pix OU cartao), sem CPF. Use só depois do teste conectado e com pessoas, prazo, forma de pagamento e e-mail confirmados. Pix responde pix_copia_e_cola e link_qrcode; cartão responde link_cartao. Sempre responde ref.",
     "parameters": [
      {
       "name": "acao",
@@ -392,6 +392,28 @@
       "in": "query",
       "required": false,
       "description": "Usuário do app a renovar. Deixe vazio quando for compra nova.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "forma",
+      "in": "query",
+      "required": true,
+      "description": "pix ou cartao (o que o cliente escolheu).",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "pix",
+        "cartao"
+       ]
+      }
+     },
+     {
+      "name": "anterior",
+      "in": "query",
+      "required": false,
+      "description": "Ref da cobrança anterior, só quando o cliente trocar a forma de pagamento (ela é cancelada).",
       "schema": {
        "type": "string"
       }

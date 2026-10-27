@@ -3464,7 +3464,7 @@ function nlEnviarTexto(){
   nlRolar();
   nlHistPush("cliente", nlEscapar(txt));
   nlApiFogo({ acao:"msg", ticket_id: NL.ticket, autor:"cliente", mensagem: txt });
-  nlLissResponder(txt);
+  nlLissResponder(txt.replace(/\[\s*aviso do sistema[^\]]*\]/gi, "(texto do cliente)"));
 }
 function nlLissFicha(resp){
   var a = resp.indexOf("[FICHA");
@@ -3574,24 +3574,68 @@ function nlLissPagamento(resp){
   var p = nlLissTag(resp, "PIX"); resp = p.resp;
   var q = nlLissTag(resp, "LINKPIX"); resp = q.resp;
   var c = nlLissTag(resp, "LINKCARTAO"); resp = c.resp;
+  var r = nlLissTag(resp, "PEDIDO"); resp = r.resp;
   if(p.valor || q.valor || c.valor){ NL.pag = { pix: p.valor, qr: q.valor, cartao: c.valor }; }
+  if(/^NL[a-z0-9]+$/i.test(r.valor)){ nlPagVigiar(r.valor, true); }
   return resp;
 }
 function nlLissCopiarPix(btn){
   var v = NL.lissPix; if(!v){ return; }
-  var ok = function(){ if(btn){ btn.textContent = "Código Pix copiado!"; setTimeout(function(){ btn.textContent = "Copiar código Pix (copia e cola)"; }, 2000); } };
+  var ok = function(){ if(btn){ btn.textContent = "Código Pix copiado!"; setTimeout(function(){ btn.textContent = "Copiar código Pix"; }, 2000); } };
   if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(String(v)).then(ok, function(){ nlCopiarFallback(v); ok(); }); } else { nlCopiarFallback(v); ok(); }
 }
 function nlLissCardPagamento(){
   var g = NL.pag; if(!g){ return; }
-  if(g.pix){ NL.lissPix = g.pix; }
-  var h = "<div class='titulo'>Pagamento seguro pelo Mercado Pago</div>";
-  if(g.pix){ h += "<button class='botao' style='width:100%;margin:8px 0' data-vivo='1' onclick='nlLissCopiarPix(this)'>Copiar código Pix (copia e cola)</button>"; }
-  if(g.qr && /^https:\/\//.test(g.qr)){ h += "<a class='botao' style='display:block;text-align:center;width:100%;margin-bottom:8px;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none;text-decoration:none' href='" + g.qr.replace(/'/g, "%27") + "' target='_blank' rel='noopener'>Ver QR Code do Pix</a>"; }
-  if(g.cartao && /^https:\/\//.test(g.cartao)){ h += "<a class='botao' style='display:block;text-align:center;width:100%;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none;text-decoration:none' href='" + g.cartao.replace(/'/g, "%27") + "' target='_blank' rel='noopener'>Pagar com cartão</a>"; }
-  nlCard(h);
   NL.pag = null;
+  var link = function(url, txt){ return "<a class='nl-link' href='" + String(url).replace(/'/g, "%27") + "' target='_blank' rel='noopener'>" + txt + "</a>"; };
+  if(g.pix){
+    NL.lissPix = g.pix;
+    var h = "<button class='botao' style='width:100%' data-vivo='1' onclick='nlLissCopiarPix(this)'>Copiar código Pix</button>";
+    if(g.qr && /^https:\/\//.test(g.qr)){ h += "<div style='text-align:center;margin-top:10px;font-size:13.5px'>" + link(g.qr, "Prefere ler o QR Code? Toque aqui") + "</div>"; }
+    nlCard(h);
+  }
+  if(g.cartao && /^https:\/\//.test(g.cartao)){ nlMsgLiss(link(g.cartao, "💳 Pagar com cartão de crédito")); }
 }
+// ===== O chat vigia o pagamento sozinho e a Liss entrega o acesso na conversa =====
+var NL_COBRANCA = "https://hook.us2.make.com/dm9cplrlpx5r5fd7aazeztamiuscfbeg";
+function nlPagVigiar(ref, novo){
+  if(novo){ try{ nlSalvar("netliss_pedido", { ref: ref, t: Date.now() }, 3600000); }catch(e){} }
+  NL.pedidoRef = ref; NL.pedidoInicio = NL.pedidoInicio && !novo ? NL.pedidoInicio : Date.now(); NL.pedidoN = 0;
+  clearTimeout(NL.pedidoTimer);
+  NL.pedidoTimer = setTimeout(nlPagChecar, 15000);
+}
+function nlPagParar(){ clearTimeout(NL.pedidoTimer); NL.pedidoRef = null; try{ localStorage.removeItem("netliss_pedido"); }catch(e){} }
+async function nlPagChecar(){
+  var ref = NL.pedidoRef; if(!ref){ return; }
+  if(Date.now() - NL.pedidoInicio > 3600000){ nlPagParar(); return; }
+  if(document.visibilityState === "hidden" || NL.aguardando){ NL.pedidoTimer = setTimeout(nlPagChecar, 15000); return; }
+  NL.pedidoN++;
+  var acao = (NL.pedidoN % 8 === 0) ? "status" : "ver";
+  var j = null;
+  try{ var r = await fetch(NL_COBRANCA + "?acao=" + acao + "&ref=" + encodeURIComponent(ref)); j = await r.json(); }catch(e){ j = null; }
+  if(ref !== NL.pedidoRef){ return; }
+  var st = j && j.status;
+  if(st === "entregue" && j.usuario){
+    nlPagParar();
+    nlPagAvisarLiss("O pagamento do pedido " + ref + " foi CONFIRMADO e o acesso já foi criado. Usuário: " + j.usuario + " / Senha: " + j.senha + ". Comemore com o cliente pelo nome, entregue o usuário e a senha exatamente nesse formato (Usuário: ... e Senha: ...), diga que também foi para o e-mail dele e passe o COMO USAR em poucas linhas.");
+    return;
+  }
+  if(st === "erro_entrega" || st === "aprovado_em_atencao"){
+    nlPagParar();
+    nlPagAvisarLiss("O pagamento do pedido " + ref + " foi APROVADO, mas o acesso está sendo finalizado pela equipe com prioridade. Tranquilize o cliente: o acesso chega no e-mail dele. Não abra chamado.");
+    return;
+  }
+  NL.pedidoTimer = setTimeout(nlPagChecar, 15000);
+}
+function nlPagAvisarLiss(txt){
+  if(!NL.aberto){ try{ nlAbrirChat("pagamento"); }catch(e){} }
+  var tenta = function(){ if(NL.aguardando){ setTimeout(tenta, 1500); return; } nlLissResponder("[AVISO DO SISTEMA - não foi o cliente que escreveu] " + txt); };
+  tenta();
+}
+document.addEventListener("visibilitychange", function(){
+  if(document.visibilityState === "visible" && NL.pedidoRef){ clearTimeout(NL.pedidoTimer); NL.pedidoTimer = setTimeout(nlPagChecar, 800); }
+});
+(function(){ try{ var pd = nlLer("netliss_pedido"); if(pd && pd.ref){ NL.pedidoInicio = pd.t || Date.now(); nlPagVigiar(pd.ref, false); } }catch(e){} })();
 function nlLissAcoes(acoes, fim){
   nlLissCardPagamento();
   if(NL.lissCopiar){
