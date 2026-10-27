@@ -3549,8 +3549,7 @@ async function nlLissResponder(txt){
   NL.lissPensando = false;
   await fila;
   nlEsperaDesligar();
-  nlTravar(false);
-  if(!res || (!res.completo && !mostrou)){ if(!mostrou){ nlMsgLiss(NL_INSTAB); } nlLiberarDigitacao(); return; }
+  if(!res || (!res.completo && !mostrou)){ nlTravar(false); if(!mostrou){ nlMsgLiss(NL_INSTAB); } nlLiberarDigitacao(); return; }
   var completo = res.completo, resp = nlLissFicha(res.resto);
   var fim = completo.indexOf("[ENCERRAR]") > -1;
   resp = resp.split("[ENCERRAR]").join("").trim();
@@ -3565,7 +3564,7 @@ async function nlLissResponder(txt){
   var blocos = resp.split(String.fromCharCode(10) + String.fromCharCode(10));
   var i = 0;
   var proximo = function(){
-    if(i >= blocos.length){ nlLissAcoes(acoes, fim); return; }
+    if(i >= blocos.length){ nlTravar(false); nlLissAcoes(acoes, fim); return; }
     var b = blocos[i++].trim();
     if(!b){ proximo(); return; }
     nlMsgLiss(nlMdHtml(b), proximo);
