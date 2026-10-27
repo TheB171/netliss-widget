@@ -3718,3 +3718,46 @@ function nlEsperaDesligar(){
   try{ clearTimeout(NL.esperaTimer); }catch(e){}
   try{ var t = document.getElementById("nl-espera"); if(t){ t.remove(); } }catch(e){}
 }
+
+// ===== Contexto do site: a Liss sabe o que o cliente clicou antes de abrir o chat =====
+document.addEventListener("click", function(ev){
+  try{
+    var el = ev.target && ev.target.closest ? ev.target.closest("a, button, div[role='button'], .botao, .btn") : null;
+    if(!el || (el.closest && el.closest("#nl-moldura"))){ return; }
+    var t = (el.textContent || "").trim().toLowerCase();
+    var ctx = "";
+    if(t.indexOf("escolher este plano") > -1){
+      var plano = "", no = el;
+      for(var i = 0; i < 8 && no && !plano; i++){
+        no = no.parentElement; if(!no){ break; }
+        var tx = no.innerText || "";
+        var achados = ["Mensal", "Trimestral", "Anual"].filter(function(p){ return tx.indexOf("Netliss " + p) > -1; });
+        if(achados.length === 1){ plano = achados[0]; }
+      }
+      ctx = "clicou em 'Escolher este plano'" + (plano ? " no plano " + plano + " (01 pessoa)" : "");
+      NL.planoSite = plano;
+    }
+    else if(t.indexOf("teste gr") > -1){ ctx = "clicou no botão do teste grátis"; }
+    else if(t.indexOf("atendimento ao cliente") > -1 || t.indexOf("especialistas") > -1){ ctx = "clicou em falar com o atendimento"; }
+    if(ctx){ NL.contextoSite = ctx; }
+  }catch(e){}
+}, true);
+(function(){
+  var _saud = nlLissSaudacao;
+  nlLissSaudacao = function(){
+    if(NL.planoSite && !NL.difyConv){
+      var opcoes = ["Oi! Que ótima escolha o plano <b>" + NL.planoSite + "</b> 😊 Eu sou a <b>Liss</b>, da Netliss, e vou te ajudar.<br><br>Antes de tudo, como você se chama?",
+                    "Olá! Vi que você se interessou pelo plano <b>" + NL.planoSite + "</b> 😊 Aqui é a <b>Liss</b>.<br><br>Como posso te chamar?"];
+      return opcoes[Math.floor(Math.random() * opcoes.length)];
+    }
+    return _saud();
+  };
+  var _perg = nlDifyPergunta;
+  nlDifyPergunta = function(texto, aoBloco){
+    if(NL.contextoSite && !NL.difyConv && texto.indexOf("[AVISO DO SISTEMA") !== 0){
+      texto = "[CONTEXTO DO SITE: o cliente " + NL.contextoSite + "] " + texto;
+      NL.contextoSite = "";
+    }
+    return _perg(texto, aoBloco);
+  };
+})();
