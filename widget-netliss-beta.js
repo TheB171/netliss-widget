@@ -3378,9 +3378,15 @@ function nlMdHtml(txt){
       var rot = l.substring(a + 1, b), url = l.substring(b + 2, c);
       r += l.substring(pos, a);
       if(url.indexOf("http") === 0){
-        if(rot === url && url.indexOf("play.google.com") > -1){ rot = "📲 Baixar o app na Play Store"; }
-        else if(rot === url && (url.indexOf("youtu") > -1)){ rot = "▶️ Assistir ao vídeo"; }
-        r += "<a class='nl-link' href='" + url + "' target='_blank' rel='noopener'>" + rot + "</a>";
+        if(url.indexOf("https://play.google.com/") === 0){
+          // link da Play Store: selo oficial do Google Play + o endereco visivel, para o cliente ver que e a loja oficial
+          r += "<a class='nl-play' href='" + url + "' target='_blank' rel='noopener'>" +
+               "<img src='https://play.google.com/intl/pt-BR/badges/static/images/badges/pt-br_badge_web_generic.png' alt='Disponível no Google Play' onerror=\"this.outerHTML='<span class=nl-play-alt>Abrir na Play Store</span>'\">" +
+               "<span class='nl-play-dom'>🔒 play.google.com · loja oficial do Google</span></a>";
+        } else {
+          if(rot === url && (url.indexOf("youtu") > -1)){ rot = "▶️ Assistir ao vídeo"; }
+          r += "<a class='nl-link' href='" + url + "' target='_blank' rel='noopener'>" + rot + "</a>";
+        }
       }
       else { r += l.substring(a, c + 1); }
       pos = c + 1;
@@ -3582,7 +3588,7 @@ function nlDigitar(depois, ms){
   setTimeout(depois, ms || 250);
 }
 function nlVoltarAoMenu(){ nlLiberarDigitacao(); }
-(function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.liss a.nl-link{color:#c6ff3d;font-weight:600;text-decoration:underline;word-break:break-word}"; document.head.appendChild(st); }catch(e){} })();
+(function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.liss a.nl-link{color:#c6ff3d;font-weight:600;text-decoration:underline;word-break:break-word}#nl-chat .msg.liss a.nl-play{display:inline-block;text-decoration:none;margin:4px 0 2px}#nl-chat .msg.liss a.nl-play img{display:block;height:62px;width:auto;margin-left:-8px}#nl-chat .msg.liss .nl-play-dom{display:block;font-size:11.5px;color:#a9b0b8;margin-top:1px}#nl-chat .msg.liss .nl-play-alt{display:inline-block;background:#c6ff3d;color:#050505;font-weight:700;border-radius:10px;padding:10px 14px}"; document.head.appendChild(st); }catch(e){} })();
 function nlOcioso(){
   var v = nlLer("netliss_visto");
   if(!v){ return false; }
