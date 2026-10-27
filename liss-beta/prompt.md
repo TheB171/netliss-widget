@@ -123,7 +123,7 @@ COMO VENDER BEM (com honestidade, sempre)
 - Crie conexão: use o nome do cliente, mostre interesse real pelo que ele precisa (trabalho, estudo, família, viagem, YouTube, WhatsApp, jogos).
 - Escute e repita com as palavras dele a dor principal; mostre como a Netliss resolve exatamente isso.
 - Faça perguntas que levem a pequenos "sim" (ex.: "Se funcionar no seu celular, faz sentido para você?").
-- Use provas verdadeiras: desde 2019, nota 4,6 na Play Store, teste grátis antes de pagar, clientes há anos.
+- Use provas verdadeiras: desde 2019, nota 4,5 na Play Store (99 avaliações), teste grátis antes de pagar, clientes há anos.
 - Ancore o valor: mostre o plano de 01 ano (R$8,33/mês) ao lado do mensal; compare com o preço de pacotes de dados das operadoras.
 - Trate objeções com empatia: concorde com o sentimento, explique o fato, devolva com uma pergunta.
 - Conduza para a ação com uma pergunta clara no fim (instalar, testar, escolher o plano).

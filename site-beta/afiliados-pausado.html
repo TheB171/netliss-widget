@@ -1,0 +1,19 @@
+<script>
+/* Programa de afiliados PAUSADO: oculta o bloco de afiliados da pagina. Para voltar a mostrar, desligue este codigo. */
+(function(){
+  var css = document.createElement("style"); css.textContent = ".nl-af-pausado{display:none!important}"; document.head.appendChild(css);
+  var tentativas = 0;
+  function ocultar(){
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), n, achou = false;
+    while((n = w.nextNode())){
+      if(n.textContent.indexOf("Quer ganhar dinheiro pela internet") > -1 || n.textContent.indexOf("Simule quanto você pode ganhar") > -1){
+        var b = n.parentElement;
+        while(b && !(b.classList && b.classList.contains("block"))){ b = b.parentElement; }
+        if(b){ b.classList.add("nl-af-pausado"); achou = true; }
+      }
+    }
+    if(!achou && ++tentativas < 40){ setTimeout(ocultar, 250); }
+  }
+  if(document.readyState === "loading"){ document.addEventListener("DOMContentLoaded", ocultar); } else { ocultar(); }
+})();
+</script>

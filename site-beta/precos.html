@@ -1,0 +1,130 @@
+<style>
+.nlpr{--g:#AFFF00;--bg:#050505;font-family:Montserrat,sans-serif;color:#fff;background:var(--bg);padding:96px 24px;box-sizing:border-box;width:100%;position:relative;overflow:hidden}
+.nlpr *{box-sizing:border-box;margin:0}
+.nlpr:before{content:"";position:absolute;width:620px;height:620px;left:-180px;top:50%;transform:translateY(-50%);background:radial-gradient(circle,rgba(175,255,0,.12),transparent 65%);pointer-events:none}
+.nlpr .wrap{position:relative;max-width:1120px;margin:0 auto;display:grid;grid-template-columns:1fr 1.05fr;gap:64px;align-items:center}
+.nlpr .tag{display:inline-block;font-size:12.5px;font-weight:700;letter-spacing:1.6px;color:var(--g);text-transform:uppercase}
+.nlpr h2{font-size:40px;line-height:1.08;font-weight:800;margin-top:12px;letter-spacing:-.5px}
+.nlpr h2 b{color:var(--g)}
+.nlpr .lead{font-size:17px;line-height:1.55;color:#c9c9c9;margin-top:18px;max-width:500px}
+.nlpr ul{list-style:none;padding:0;margin-top:26px;display:grid;gap:12px}
+.nlpr li{display:flex;gap:12px;align-items:center;font-size:15.5px;color:#e6e6e6}
+.nlpr li i{flex:0 0 26px;height:26px;border-radius:50%;background:rgba(175,255,0,.14);color:var(--g);display:flex;align-items:center;justify-content:center;font-style:normal;font-weight:800;font-size:13px}
+.nlpr .card{background:linear-gradient(160deg,#121212,#0a0a0a);border:1px solid rgba(255,255,255,.09);border-radius:22px;padding:30px 28px;box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 0 1px rgba(175,255,0,.05) inset}
+.nlpr .lbl{display:block;font-size:13px;font-weight:600;color:#9a9a9a;margin-bottom:10px}
+.nlpr .seg{display:grid;gap:8px}
+.nlpr .seg.t{grid-template-columns:repeat(3,1fr)}
+.nlpr .seg.p{grid-template-columns:repeat(5,1fr);margin-top:22px}
+.nlpr .seg button{position:relative;font-family:inherit;font-size:15px;font-weight:700;color:#d8d8d8;background:#161616;border:1px solid rgba(255,255,255,.1);border-radius:12px;padding:13px 6px;cursor:pointer;transition:all .18s ease}
+.nlpr .seg button:hover{border-color:rgba(175,255,0,.45)}
+.nlpr .seg button.on{background:var(--g);color:#050505;border-color:var(--g);box-shadow:0 8px 24px rgba(175,255,0,.25)}
+.nlpr .seg button small{position:absolute;top:-9px;left:50%;transform:translateX(-50%);white-space:nowrap;font-size:9.5px;font-weight:800;letter-spacing:.6px;text-transform:uppercase;background:#fff;color:#050505;border-radius:20px;padding:3px 8px}
+.nlpr .res{margin-top:26px;padding-top:24px;border-top:1px solid rgba(255,255,255,.08)}
+.nlpr .money{font-size:54px;font-weight:800;color:var(--g);letter-spacing:-1px;line-height:1;font-variant-numeric:tabular-nums}
+.nlpr .money span{font-size:22px;font-weight:700;margin-right:4px;vertical-align:top;line-height:1.6}
+.nlpr .sub{font-size:15.5px;color:#e6e6e6;margin-top:10px;font-weight:600}
+.nlpr .sub2{font-size:14px;color:#a9a9a9;margin-top:4px}
+.nlpr .eco{display:inline-block;margin-top:14px;font-size:13.5px;font-weight:700;color:var(--g);background:rgba(175,255,0,.1);border:1px solid rgba(175,255,0,.25);border-radius:30px;padding:7px 14px}
+.nlpr .cta{display:block;width:100%;text-align:center;margin-top:24px;font-family:inherit;font-size:18px;font-weight:800;color:#050505;background:var(--g);border:0;border-radius:14px;padding:19px 20px;cursor:pointer;text-decoration:none;transition:transform .15s ease,box-shadow .15s ease;box-shadow:0 12px 34px rgba(175,255,0,.28)}
+.nlpr .cta:hover{transform:translateY(-2px);box-shadow:0 16px 40px rgba(175,255,0,.38)}
+.nlpr .fine{font-size:12.5px;color:#8a8a8a;line-height:1.5;margin-top:16px;text-align:center}
+.nlpr .rv{opacity:0;transform:translateY(22px);transition:opacity .7s ease,transform .7s ease}
+.nlpr .rv.vis{opacity:1;transform:none}
+@keyframes nlprPulse{0%{transform:scale(1)}40%{transform:scale(1.04)}100%{transform:scale(1)}}
+.nlpr .money.pulse{animation:nlprPulse .35s ease}
+@media(max-width:860px){
+.nlpr{padding:56px 20px}.nlpr .wrap{grid-template-columns:1fr;gap:32px}
+.nlpr h2{font-size:28px;line-height:1.12}.nlpr .lead{font-size:15.5px;margin-top:14px}
+.nlpr ul{margin-top:20px;gap:10px}.nlpr li{font-size:14.5px}
+.nlpr .card{padding:24px 18px;border-radius:18px}
+.nlpr .seg button{font-size:14px;padding:12px 4px}
+.nlpr .money{font-size:46px}.nlpr .cta{font-size:17px;padding:18px}
+}
+</style>
+<script>
+(function(){
+  var P = {1:{30:24.90,90:59.90,365:99.90},2:{30:35.90,90:86.90,365:143.90},3:{30:52.90,90:126.90,365:211.90},4:{30:69.90,90:167.90,365:279.90},5:{30:84.90,90:203.90,365:339.90}};
+  var MESES = {30:1, 90:3, 365:12};
+  var brl = function(v){ return (Math.round(v * 100 + 1e-6) / 100).toFixed(2).replace(".", ","); };
+  var dois = function(n){ return (n < 10 ? "0" : "") + n; };
+  var html = '<div class="nlpr" id="planos"><div class="wrap">' +
+    '<div class="rv">' +
+      '<span class="tag">Planos Netliss</span>' +
+      '<h2>Quanto mais tempo e mais pessoas, <b>menor o preço</b></h2>' +
+      '<p class="lead">Monte o seu plano e veja o valor na hora. E fique tranquilo: você só contrata depois de fazer o teste grátis e ver funcionando no seu aparelho.</p>' +
+      '<ul><li><i>✓</i>Internet ilimitada, sem pacote acabando</li><li><i>✓</i>Suporte especializado</li><li><i>✓</i>Tutorial para rotear para outros aparelhos</li><li><i>✓</i>Pagamento por Pix ou cartão de crédito</li></ul>' +
+    '</div>' +
+    '<div class="card rv" aria-label="Simulador de planos">' +
+      '<span class="lbl">Por quanto tempo?</span>' +
+      '<div class="seg t">' +
+        '<button type="button" data-d="30">30 dias</button>' +
+        '<button type="button" data-d="90"><small>Mais vendido</small>03 meses</button>' +
+        '<button type="button" data-d="365">01 ano</button>' +
+      '</div>' +
+      '<span class="lbl" style="margin-top:22px">Para quantas pessoas?</span>' +
+      '<div class="seg p" style="margin-top:0">' +
+        [1,2,3,4,5].map(function(n){ return '<button type="button" data-p="' + n + '">' + dois(n) + '</button>'; }).join("") +
+      '</div>' +
+      '<div class="res">' +
+        '<div class="money" id="nlprTotal"></div>' +
+        '<div class="sub" id="nlprMes"></div>' +
+        '<div class="sub2" id="nlprPessoa"></div>' +
+        '<div class="eco" id="nlprEco"></div>' +
+      '</div>' +
+      '<a class="cta" href="#" id="nlprCta">Quero este plano</a>' +
+      '<p class="fine">Teste grátis antes de contratar. Mais de 05 pessoas ou empresa? Fale com a Liss.</p>' +
+    '</div>' +
+  '</div></div>';
+
+  function montar(){
+    if(document.getElementById("planos")){ return true; }
+    var alvo = null;
+    var w = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT), n;
+    while((n = w.nextNode())){ if(n.textContent.indexOf("Quanto custa sua liberdade") > -1){ alvo = n.parentElement; break; } }
+    if(!alvo){ return false; }
+    while(alvo && !(alvo.classList && alvo.classList.contains("block"))){ alvo = alvo.parentElement; }
+    if(!alvo){ return false; }
+    for(var i = 0; i < alvo.children.length; i++){ alvo.children[i].style.display = "none"; }
+    alvo.insertAdjacentHTML("afterbegin", html);
+    var raiz = document.getElementById("planos");
+    var est = { d: 90, p: 1 };
+    var desenhar = function(){
+      var total = P[est.p][est.d], meses = MESES[est.d];
+      var porMes = total / meses, base = 24.90 * meses * est.p, eco = base - total;
+      var t = document.getElementById("nlprTotal");
+      t.innerHTML = "<span>R$</span>" + brl(total);
+      t.classList.remove("pulse"); void t.offsetWidth; t.classList.add("pulse");
+      document.getElementById("nlprMes").textContent = meses > 1 ? "Sai por R$" + brl(porMes) + " por mês" : "Por 30 dias de internet ilimitada";
+      document.getElementById("nlprPessoa").textContent = est.p > 1 ? "R$" + brl(porMes / est.p) + " por pessoa por mês · " + dois(est.p) + " acessos" : "01 acesso";
+      var e = document.getElementById("nlprEco");
+      if(eco > 0.5){ e.style.display = "inline-block"; e.textContent = "Economia de R$" + brl(eco) + " (" + Math.round(eco / base * 100) + "%) comparado a pagar 30 dias de cada vez"; }
+      else { e.style.display = "inline-block"; e.textContent = "Sem fidelidade e sem renovação automática"; }
+      var bs = raiz.querySelectorAll(".seg button");
+      for(var k = 0; k < bs.length; k++){
+        var b = bs[k];
+        var on = (b.getAttribute("data-d") && +b.getAttribute("data-d") === est.d) || (b.getAttribute("data-p") && +b.getAttribute("data-p") === est.p);
+        b.classList.toggle("on", !!on);
+      }
+    };
+    raiz.addEventListener("click", function(ev){
+      var b = ev.target.closest("button");
+      if(b && b.getAttribute("data-d")){ est.d = +b.getAttribute("data-d"); desenhar(); }
+      if(b && b.getAttribute("data-p")){ est.p = +b.getAttribute("data-p"); desenhar(); }
+    });
+    document.getElementById("nlprCta").addEventListener("click", function(ev){
+      ev.preventDefault(); ev.stopPropagation();
+      if(window.nlAbrirChat){ window.nlAbrirChat("planos"); }
+    }, true);
+    desenhar();
+    var rv = raiz.querySelectorAll(".rv");
+    if("IntersectionObserver" in window){
+      var io = new IntersectionObserver(function(es){ es.forEach(function(x){ if(x.isIntersecting){ x.target.classList.add("vis"); io.unobserve(x.target); } }); }, { threshold: .15 });
+      for(var r = 0; r < rv.length; r++){ io.observe(rv[r]); }
+    } else { for(var r2 = 0; r2 < rv.length; r2++){ rv[r2].classList.add("vis"); } }
+    return true;
+  }
+  var tentativas = 0;
+  var tentar = function(){ if(montar() || ++tentativas > 40){ return; } setTimeout(tentar, 250); };
+  if(document.readyState === "loading"){ document.addEventListener("DOMContentLoaded", tentar); } else { tentar(); }
+})();
+</script>

@@ -1,0 +1,19 @@
+<style>
+#nlBarra{position:fixed;left:12px;right:86px;bottom:14px;z-index:2147482000;display:none;font-family:Montserrat,sans-serif}
+#nlBarra a{display:block;text-align:center;font-size:16px;font-weight:800;color:#050505;background:#AFFF00;border-radius:14px;padding:15px 12px;text-decoration:none;box-shadow:0 10px 30px rgba(0,0,0,.55),0 6px 20px rgba(175,255,0,.3)}
+@media(min-width:861px){#nlBarra{display:none!important}}
+</style>
+<div id="nlBarra"><a href="#">Fazer meu teste grátis</a></div>
+<script>
+/* Barra fixa no celular com o botao de teste gratis (abre a conversa com a Liss). Aparece depois do topo e some com o chat aberto. */
+(function(){
+  var barra = document.getElementById("nlBarra"); if(!barra){ return; }
+  barra.querySelector("a").addEventListener("click", function(ev){ ev.preventDefault(); ev.stopPropagation(); if(window.nlAbrirChat){ window.nlAbrirChat("barra_mobile"); } barra.style.display = "none"; }, true);
+  function ver(){
+    var chat = document.getElementById("nl-moldura");
+    var chatAberto = chat && chat.style.display === "block";
+    barra.style.display = (window.innerWidth <= 860 && window.scrollY > 650 && !chatAberto) ? "block" : "none";
+  }
+  window.addEventListener("scroll", ver, { passive: true }); window.addEventListener("resize", ver); setInterval(ver, 800); ver();
+})();
+</script>
