@@ -3392,31 +3392,66 @@ function nlMdHtml(txt){
   return out.join("<br>");
 }
 async function nlDifyToken(){
-  if(NL_DIFY.tok && Date.now() - NL_DIFY.tokEm < 3000000){ return NL_DIFY.tok; }
+  // a chave de sessao do Dify nao expira e e ela que liga o cliente a conversa:
+  // fica guardada no aparelho, para a Liss nao "esquecer" a conversa quando a pagina recarrega
+  if(NL_DIFY.tok){ return NL_DIFY.tok; }
+  var salvo = nlLer("netliss_liss_sessao");
+  if(salvo){ NL_DIFY.tok = salvo; return salvo; }
   var r = await fetch(NL_DIFY.base + "/api/passport", { headers: { "X-App-Code": NL_DIFY.code } });
   var j = await r.json();
   NL_DIFY.tok = j.access_token; NL_DIFY.tokEm = Date.now();
+  try{ nlSalvar("netliss_liss_sessao", NL_DIFY.tok, 2592000000); }catch(e){}
   return NL_DIFY.tok;
 }
-async function nlDifyPergunta(texto){
+async function nlDifyPergunta(texto, aoBloco){
   var tok = await nlDifyToken();
   var fp = "";
-  try{ fp = await nlFpPronto(1500); }catch(e){}
+  try{ fp = await nlFpPronto(NL.fp ? 50 : 1200); }catch(e){}
   var corpo = { inputs: { id_netliss: NL.clientId || "", fp: fp || "" }, query: texto, response_mode: "streaming", conversation_id: NL.difyConv || "" };
+  // sem o "pai" (a ultima mensagem da conversa) o Dify nao entrega o historico para a Liss e ela esquece tudo
+  var pai = nlLer("netliss_liss_pai");
+  if(NL.difyConv && pai && pai.conv === NL.difyConv && pai.msg){ corpo.parent_message_id = pai.msg; }
   var r = await fetch(NL_DIFY.base + "/api/chat-messages", { method: "POST", headers: { "X-App-Passport": tok, "X-App-Code": NL_DIFY.code, "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
-  if(r.status === 404 && NL.difyConv){ NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto); }
+  if(r.status === 401 && !NL.difyReset){ NL.difyReset = 1; NL_DIFY.tok = null; try{ localStorage.removeItem("netliss_liss_sessao"); }catch(e){} NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto, aoBloco); }
+  if(r.status === 404 && NL.difyConv){ NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto, aoBloco); }
   if(r.status >= 400){ throw new Error("dify " + r.status); }
-  var bruto = await r.text();
-  var resp = "", linhas = bruto.split(String.fromCharCode(10));
-  for(var i = 0; i < linhas.length; i++){
-    var ln = linhas[i];
-    if(ln.indexOf("data:") !== 0){ continue; }
-    var d = null; try{ d = JSON.parse(ln.substring(5)); }catch(e){ continue; }
+  var resp = "", enviado = 0, parou = false, NL2 = String.fromCharCode(10) + String.fromCharCode(10);
+  // mostra cada paragrafo assim que ele fica pronto (a conversa flui como gente escrevendo)
+  var emitir = function(){
+    if(!aoBloco || parou){ return; }
+    while(true){
+      var resto = resp.slice(enviado), k = resto.indexOf(NL2);
+      if(k < 0){ return; }
+      var bloco = resto.slice(0, k);
+      if(bloco.indexOf("[") > -1){ parou = true; return; }
+      enviado += k + 2;
+      if(bloco.trim()){ aoBloco(bloco.trim()); }
+    }
+  };
+  var tratar = function(ln){
+    if(ln.indexOf("data:") !== 0){ return; }
+    var d = null; try{ d = JSON.parse(ln.substring(5)); }catch(e){ return; }
     if(d.conversation_id && !NL.difyConv){ NL.difyConv = d.conversation_id; nlSalvarConv(); }
-    if(d.event === "agent_message" || d.event === "message"){ resp += (d.answer || ""); }
+    var mid = d.message_id || (d.event === "message_end" ? d.id : "");
+    if(mid && d.conversation_id){ try{ nlSalvar("netliss_liss_pai", { conv: d.conversation_id, msg: mid }, 2592000000); }catch(e){} }
+    if(d.event === "agent_message" || d.event === "message"){ resp += (d.answer || ""); emitir(); }
     if(d.event === "error"){ throw new Error(d.message || "erro"); }
+  };
+  if(r.body && r.body.getReader){
+    var leitor = r.body.getReader(), dec = new TextDecoder(), buf = "";
+    while(true){
+      var pedaco = await leitor.read();
+      if(pedaco.done){ break; }
+      buf += dec.decode(pedaco.value, { stream: true });
+      var j;
+      while((j = buf.indexOf(String.fromCharCode(10))) > -1){ var linha = buf.slice(0, j).trim(); buf = buf.slice(j + 1); tratar(linha); }
+    }
+    if(buf.trim()){ tratar(buf.trim()); }
+  } else {
+    var linhas = (await r.text()).split(String.fromCharCode(10));
+    for(var i = 0; i < linhas.length; i++){ tratar(linhas[i].trim()); }
   }
-  return resp.trim();
+  return { completo: resp.trim(), resto: resp.slice(enviado).trim(), mostrou: enviado > 0 };
 }
 function nlLissLayout(){
   try{
@@ -3502,14 +3537,22 @@ function nlLissFim(){
 async function nlLissResponder(txt){
   nlTravar(true);
   nlEsperaLigar();
-  var resp = null;
-  try{ resp = await nlDifyPergunta(txt); }catch(e){ resp = null; }
-  if(!resp){ try{ await new Promise(function(ok){ setTimeout(ok, 1500); }); resp = await nlDifyPergunta(txt); }catch(e2){ resp = null; } }
+  var fila = Promise.resolve(), mostrou = false;
+  var aoBloco = function(bloco){
+    mostrou = true;
+    fila = fila.then(function(){ return new Promise(function(ok){ nlEsperaDesligar(); nlMsgLiss(nlMdHtml(bloco), function(){ if(NL.lissPensando){ nlEsperaLigar(); } ok(); }); }); });
+  };
+  var res = null;
+  NL.lissPensando = true;
+  try{ res = await nlDifyPergunta(txt, aoBloco); }catch(e){ res = null; }
+  if(!res && !mostrou){ try{ await new Promise(function(ok){ setTimeout(ok, 1500); }); res = await nlDifyPergunta(txt, aoBloco); }catch(e2){ res = null; } }
+  NL.lissPensando = false;
+  await fila;
   nlEsperaDesligar();
   nlTravar(false);
-  if(!resp){ nlMsgLiss(NL_INSTAB); nlLiberarDigitacao(); return; }
-  resp = nlLissFicha(resp);
-  var fim = resp.indexOf("[ENCERRAR]") > -1;
+  if(!res || (!res.completo && !mostrou)){ if(!mostrou){ nlMsgLiss(NL_INSTAB); } nlLiberarDigitacao(); return; }
+  var completo = res.completo, resp = nlLissFicha(res.resto);
+  var fim = completo.indexOf("[ENCERRAR]") > -1;
   resp = resp.split("[ENCERRAR]").join("").trim();
   var acoes = [];
   var marcas = ["AFILIADO", "VIDEO_TESTE", "VIDEOS_ROTEAMENTO"];
@@ -3518,7 +3561,7 @@ async function nlLissResponder(txt){
     if(resp.indexOf(tag) > -1){ acoes.push(marcas[m]); resp = resp.split(tag).join("").trim(); }
   }
   resp = nlLissPagamento(resp);
-  nlLissCredenciais(resp);
+  nlLissCredenciais(completo);
   var blocos = resp.split(String.fromCharCode(10) + String.fromCharCode(10));
   var i = 0;
   var proximo = function(){
@@ -3528,6 +3571,11 @@ async function nlLissResponder(txt){
     nlMsgLiss(nlMdHtml(b), proximo);
   };
   proximo();
+}
+// baloes da Liss: pausa curta entre um e outro (antes era 0,8 s de "digitando" falso em cada balao)
+function nlDigitar(depois, ms){
+  if(NL.silencioso){ depois(); return; }
+  setTimeout(depois, ms || 250);
 }
 function nlVoltarAoMenu(){ nlLiberarDigitacao(); }
 (function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.liss a.nl-link{color:#c6ff3d;font-weight:600;text-decoration:underline;word-break:break-word}"; document.head.appendChild(st); }catch(e){} })();
