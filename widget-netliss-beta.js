@@ -3461,6 +3461,2542 @@ function nlLissLayout(){
   }catch(e){}
 }
 function nlLissSaudacao(){
+  // curta, de acordo com a hora, com uma pergunta facil de responder (testar ou tirar duvida) - sem cara de formulario
+  var h = new Date().getHours();
+  var p = (h >= 5 && h < 12) ? "Bom dia" : (h >= 12 && h < 18) ? "Boa tarde" : "Boa noite";
+  var lista = [
+    p + "! 😊 Aqui é a <b>Liss</b>, da Netliss.<br><br>Quer testar a internet ilimitada de graça no seu celular ou prefere tirar alguma dúvida antes?",
+    p + "! Que bom te ver por aqui 😊 Eu sou a <b>Liss</b>.<br><br>Posso liberar um teste grátis pra você agora, ou você quer entender melhor como funciona primeiro?",
+    "Oi, " + p.toLowerCase() + "! 😊 Liss aqui, da Netliss.<br><br>Me conta: você já conhece a Netliss ou é a primeira vez?",
+    p + "! Jesus te abençoe 🙏 Sou a <b>Liss</b>, da Netliss.<br><br>Você veio testar a internet ilimitada ou ficou com alguma dúvida?"
+  ];
+  return lista[Math.floor(Math.random() * lista.length)];
+}
+function nlInicio(origem){
+  try{ nlCarregarAvisos().catch(function(){}); }catch(e){}
+  NL.pulouFicha = false;
+  NL.testesAparelho = undefined;
+  nlGarantirTicket();
+  nlMsgLiss("Olá! Jesus te abençoe! Eu sou a <b>Liss</b>, a assistente virtual da Netliss!", function(){
+    nlMsgLiss("Para agilizar o seu atendimento, por favor me conte:", function(){
+    nlChips([
+      { rotulo:"Sou novo aqui", acao:nlFluxoNovo },
+      { rotulo:"Já sou cliente", acao:nlFluxoCliente },
+      { rotulo:"Ganhe dinheiro indicando a Netliss", acao:nlAfInicio, largo:true }
+    ]);
+    });
+  });
+}
+
+// ---------------- NOVO ----------------
+async function nlFluxoNovo(){
+  if(NL.testesAparelho >= 3){ nlLimiteTestes(); return; }
+  if(!NL.pulouFicha){
+    NL.pulouFicha = true;
+    var n = await nlContarTestes();
+    if(n >= 3){ nlLimiteTestes(); return; }
+    if(n >= 1){ nlJaTestou(n); return; }
+  }
+  nlPedirNome();
+}
+function nlSalvarNome(){
+  var n = document.getElementById("nl-nome-novo").value.trim();
+  if(n.length < 2){ nlDestravar(); alert("Digite seu nome"); return; }
+  NL.nome = n.split(" ")[0];
+  nlFichaGravar({ nome: NL.nome });
+  nlMsgUser(n);
+  nlApiFogo({ acao:"nome", nome:n, aviso:"novo", testes: (NL.testesAparelho > 0 ? NL.testesAparelho : 0) });
+  // v92: cliente novo vai direto para a apresentação; o aviso só aparece para Vivo pré
+  nlRotaConexao();
+}
+// v90: aviso importante logo no começo do atendimento (texto da aba Avisos), com botão único
+async function nlAvisoInicio(quem){
+  if(!NL.avisoMostrado){
+    var _cache = false;
+    try{ var _c = JSON.parse(localStorage.getItem("nl_avisos") || "null"); _cache = !!(_c && _c.quando && (Date.now() - _c.quando) < 21600000); }catch(e){}
+    if(!_cache){ nlEsperaLigar(); }
+    try{ await nlCarregarAvisos(); }catch(e){}
+    if(!_cache){ nlEsperaDesligar(); }
+  }
+  if(!NL.avisoMostrado && NL.avisoTexto && NL.avisoTexto.replace(/[\s\-]/g, "").length > 3){
+    NL.avisoMostrado = true;
+    nlMsgLiss("<b>Aviso importante:</b> " + nlEscapar(NL.avisoTexto), function(){
+      nlChips([{ rotulo:"Entendi, continuar", acao:(quem === "cliente" ? nlAvisoOkCliente : nlAvisoOkNovo), largo:true }]);
+    });
+    return;
+  }
+  if(quem === "cliente"){ nlPedirUsuario(); } else { nlRotaConexao(); }
+}
+function nlAvisoOkNovo(){ nlRotaConexao(); }
+function nlAvisoOkCliente(){ nlPedirUsuario(); }
+function nlOpTim(){ nlAndroidModalidade("TIM"); }
+function nlOpVivo(){ nlAndroidModalidade("Vivo"); }
+function nlModalPre(){
+  if((NL.op || "") === "Vivo"){ nlAvisoOperadora(function(){ nlAndroidRegras("Vivo", "PRE"); }); return; }
+  nlAndroidRegras(NL.op || "TIM", "PRE");
+}
+// v92: aviso importante só para Vivo pré (a Claro já tem a própria tela de aviso)
+async function nlAvisoOperadora(depois){
+  if(!NL.avisoMostrado){
+    try{ await nlCarregarAvisos(); }catch(e){}
+  }
+  if(!NL.avisoMostrado && NL.avisoTexto && NL.avisoTexto.replace(/[\s\-]/g, "").length > 3){
+    NL.avisoMostrado = true;
+    nlMsgUser("Pré-pago");
+    nlMsgLiss("<b>Aviso importante:</b> " + nlEscapar(NL.avisoTexto), function(){
+      nlChips([{ rotulo:"Entendi, continuar", acao:function(){ NL.avisoJaUser = true; depois(); }, largo:true }]);
+    });
+    return;
+  }
+  depois();
+}
+function nlModalPos(){ nlAndroidRegras(NL.op || "TIM", "POS"); }
+
+function nlRotaConexao(){
+  nlMsgLiss("Que bom ter você aqui, <b>" + nlEscapar(NL.nome) + "</b>!", function(){
+    nlMsgLiss("Nossa internet é <b>100% ilimitada de verdade</b>, e você pode usar e rotear à vontade sem medo de acabar. Nós somos um aplicativo para dispositivos móveis com sistema operacional <b>ANDROID</b>. Não funcionamos com iOS (iPhone) ou outros sistemas operacionais. O pacote da sua operadora pode até diminuir enquanto você usa, mas, quando ele acaba, a Netliss continua funcionando. É fácil de usar e eu vou te explicar tudo por aqui.", function(){
+      nlMsgLiss("Primeiro vamos falar sobre as regras de funcionamento, me conta qual operadora você usa?", function(){
+        nlChips([
+          { rotulo:"TIM", acao:nlOpTim },
+          { rotulo:"Vivo", acao:nlOpVivo },
+          { rotulo:"Claro", acao:nlClaroTela },
+          { rotulo:"Outras operadoras", acao:nlOutrasOperadoras }
+        ]);
+      });
+    });
+  });
+}
+function nlIrParaOperadoras(){ nlNovoAndroid(); }
+
+
+function nlNovoAndroid(){
+  nlPerguntarOperadora();
+}
+function nlPerguntarOperadora(){
+  nlMsgLiss("Me conta qual operadora você usa?", function(){
+    nlChips([
+      { rotulo:"TIM", acao:nlOpTim },
+      { rotulo:"Vivo", acao:nlOpVivo },
+      { rotulo:"Claro", acao:nlClaroTela },
+      { rotulo:"Outras operadoras", acao:nlOutrasOperadoras }
+    ]);
+  });
+}
+function nlOutrasOperadoras(){
+  nlMsgUser("Outras operadoras");
+  nlMsgLiss("A nossa base são as redes da <b>TIM</b>, da <b>Vivo</b> e da <b>Claro</b>. Se a sua operadora usa a rede de uma delas, tem tudo para funcionar normalmente.", function(){
+    nlMsgLiss("Caso não saiba, pesquise no Google sobre qual rede a sua operadora usa. Normalmente muitas operadoras possuem nome diferente, mas utilizam a mesma rede.", function(){
+      nlChips([
+        { rotulo:"Usa a rede da TIM", acao:nlOpTim },
+        { rotulo:"Usa a rede da Vivo", acao:nlOpVivo },
+        { rotulo:"Usa a rede da Claro", acao:nlClaroTela }
+      ]);
+    });
+  });
+}
+function nlAndroidModalidade(operadora){
+  NL.op = operadora;
+  nlFichaGravar({ op: operadora });
+  nlMsgUser(operadora);
+  nlMsgLiss("Anotado: <b>" + operadora + "</b>.", function(){
+    nlMsgLiss("E qual é a modalidade do seu chip?", function(){
+      nlChips([
+        { rotulo:"Pré-pago", acao:nlModalPre },
+        { rotulo:"Pós-pago ou Controle", acao:nlModalPos }
+      ]);
+    });
+  });
+}
+function nlAndroidRegras(operadora, mod){
+  NL.mod = mod;
+  nlFichaGravar({ mod: mod });
+  if(NL.avisoJaUser){ NL.avisoJaUser = false; } else { nlMsgUser(mod === "PRE" ? "Pré-pago" : "Pós-pago ou Controle"); }
+  if(mod === "PRE"){
+    nlMsgLiss("A dica é não ficar longos períodos sem colocar crédito, para que a operadora não cancele o funcionamento da sua rede. Sem a <b>rede utilizável</b> o aplicativo não consegue conectar.", function(){
+      nlMsgLiss("Esse crédito não é para gastar com a internet da operadora: serve só para manter a sua <b>rede utilizável</b>, porque a internet que você usa é a da Netliss. Com o saldo <b>válido</b> o aplicativo conecta com mais facilidade; com o saldo <b>expirado</b> ele ainda funciona por um bom tempo, com mais dificuldade, até parar. Quando ficar só em <b>procurando rede utilizável</b>, faça uma nova recarga mínima. Normalmente uma recarga dura de 45 a 90 dias." + (operadora === "TIM" ? " Com a TIM, uma recarga de R$20 costuma durar esse tempo todo." : ""), function(){
+        nlChips([
+          { rotulo:"Continuar para o teste", acao:nlPassoApp },
+          { rotulo:"Tenho outro chip", acao:nlNovoAndroid }
+        ]);
+      });
+    });
+  } else {
+    nlMsgLiss("A dica é não deixar de pagar em dia o seu plano com a operadora, para que ela não cancele o funcionamento da sua rede. Sem a <b>rede utilizável</b> o aplicativo não consegue conectar.", function(){
+      nlMsgLiss("Você pode ficar no plano mais barato da sua operadora se quiser economizar: a Netliss usa a rede da operadora só como caminho até os nossos servidores, e a internet que você usa é a nossa.", function(){
+        nlChips([
+          { rotulo:"Continuar para o teste", acao:nlPassoApp },
+          { rotulo:"Tenho outro chip", acao:nlNovoAndroid }
+        ]);
+      });
+    });
+  }
+}
+function nlClaroTela(){
+  NL.op = "Claro"; NL.mod = "POS";
+  nlFichaGravar({ op: "Claro", mod: "POS" });
+  nlMsgUser("Claro");
+  nlMsgLiss("Com a <b>Claro</b>, os resultados estão variando de aparelho para aparelho: só o teste grátis vai mostrar se funciona no seu. Se não funcionar, um chip <b>TIM</b> costuma resolver.", function(){
+    nlMsgLiss("A dica é não deixar de recarregar (pré-pago) nem de pagar em dia (pós-pago ou controle), para que a operadora não cancele o funcionamento da sua rede. Sem a <b>rede utilizável</b> o aplicativo não consegue conectar.", function(){
+      nlMsgLiss("Você pode ficar no plano mais barato da sua operadora se quiser economizar: a Netliss usa a rede da operadora só como caminho até os nossos servidores, e a internet que você usa é a nossa.", function(){
+        nlChips([
+          { rotulo:"Continuar para o teste", acao:nlPassoApp },
+          { rotulo:"Tenho outro chip", acao:nlNovoAndroid }
+        ]);
+      });
+    });
+  });
+}
+function nlPassoApp(){
+  nlMsgLiss("Primeiro passo é baixar o nosso aplicativo na Play Store. Aproveita para dar uma olhada nas <b>avaliações</b> de quem já usou o nosso app...", function(){
+    nlChips([{ rotulo:"Baixar na Play Store", acao:nlAposDownload }]);
+  });
+}
+function nlVideoGrande(qual){
+  var _src = (qual && CFG.videosRot[qual - 1]) ? CFG.videosRot[qual - 1] : CFG.videoTeste;
+  var f = document.createElement("div");
+  f.id = "nl-video-grande";
+  f.style.cssText = "position:fixed;inset:0;z-index:1000000;background:rgba(0,0,0,.88);display:flex;align-items:center;justify-content:center;padding:24px;backdrop-filter:blur(6px)";
+  f.innerHTML = "<div style='position:relative;width:min(900px,92vw)'>" +
+    "<div style='position:relative;padding-bottom:56.25%;height:0;border-radius:14px;overflow:hidden;box-shadow:0 24px 70px rgba(0,0,0,.7)'>" +
+    "<iframe src='" + _src + "&autoplay=1' style='position:absolute;top:0;left:0;width:100%;height:100%;border:0' allow='autoplay; encrypted-media; picture-in-picture; fullscreen' allowfullscreen></iframe></div>" +
+    "<button style='position:absolute;top:-46px;right:0;background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25);border-radius:99px;padding:8px 18px;font-size:14px;cursor:pointer;font-family:inherit' onclick='nlFecharVideo()'>Fechar</button>" +
+    "</div>";
+  f.onclick = function(e){ if(e.target === f){ nlFecharVideo(); } };
+  document.body.appendChild(f);
+}
+function nlFecharVideo(){
+  var f = document.getElementById("nl-video-grande");
+  if(f){ f.parentNode.removeChild(f); }
+}
+function nlAposDownload(){
+  window.open(CFG.playStore, "_blank");
+  nlMsgLiss("O vídeo abaixo vai te ensinar como inserir o seu usuário e senha e fazer o seu teste grátis. Assista antes de prosseguir.", function(){
+    nlCard("<div style='position:relative;padding-bottom:56%;height:0;border-radius:12px;overflow:hidden;margin-bottom:11px;border:1px solid rgba(255,255,255,.09)'><iframe src='" + CFG.videoTeste + "' style='position:absolute;top:0;left:0;width:100%;height:100%;border:0' title='Como fazer o teste' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' referrerpolicy='strict-origin-when-cross-origin' allowfullscreen></iframe></div>" +
+      "<button class='botao' style='width:100%;margin-bottom:9px;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none' data-vivo='1' onclick='nlVideoGrande()'>Ver em tela maior</button>" +
+      "<button class='botao' onclick='nlGerarTeste()'>Já assisti, receber teste</button>", { nl: "teste" });
+  });
+}
+async function nlGerarTeste(){
+  if(nlTrancado("teste")){ return; }
+  nlMsgUser("Já assisti, receber teste");
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var _fp = await nlFpPronto(2500);
+    var _fi = nlFichaLer();
+    var _op = NL.op || _fi.op || "", _md = NL.mod || _fi.mod || "";
+    var r = await nlApi({ acao:"teste", operadora: _op, modalidade: _md, fp: _fp || "", nome: NL.nome || _fi.nome || "" });
+    if(r && !r.limite && !(r.usuario && r.usuario !== "undefined")){
+      await new Promise(function(ok){ setTimeout(ok, 2500); });
+      var r2 = await nlApi({ acao:"teste", operadora: _op, modalidade: _md, fp: _fp || "", nome: NL.nome || _fi.nome || "" });
+      if(r2){ r = r2; }
+    }
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlGerarTeste); return; }
+    nlInertes("teste");
+    if(r && r.limite){
+      nlFichaGravar({ testou: 1, testes: 3, limite: 1 });
+      nlLimiteTestes();
+      return;
+    }
+    if(r && r.usuario && r.usuario !== "undefined"){
+      NL.copiaUser = r.usuario; NL.copiaSenha = r.senha;
+      nlFichaGravar({ testou: 1, testes: (nlFichaLer().testes || 0) + 1, op: NL.op || "", mod: NL.mod || "", testeEm: Date.now() });
+      nlMsgLiss("Teste grátis liberado:<br><br>Usuário: <b>" + nlEscapar(r.usuario) + "</b><br>Senha: <b>" + nlEscapar(r.senha) + "</b><br>Validade: <b>" + nlEscapar(r.validade_horas || "1") + " hora</b><br><br><button class='chip' data-vivo='1' onclick='nlCopiarCred(0,this)'>Copiar usuário</button> <button class='chip' data-vivo='1' onclick='nlCopiarCred(1,this)'>Copiar senha</button>", function(){
+        nlChips([
+          { rotulo:"Ver preços e planos", acao:nlMostrarPlanos },
+          { rotulo:"Preciso de ajuda", acao:nlSuporteNovo }
+        ]);
+      });
+    } else {
+      nlMsgLiss("Opa, não consegui gerar o seu teste. Por favor, tente novamente — e se não der certo, reporte o erro aqui embaixo para avisar a nossa equipe.", function(){
+        nlChips([
+          { rotulo:"Tentar novamente", acao:nlGerarTeste },
+          { rotulo:"Reportar erro", acao:nlReportarErro }
+        ]);
+      });
+    }
+  }, 400);
+}
+// ---------------- SUPORTE: TRILHA CLIENTE NOVO ----------------
+function nlSuporteNovo(){
+  NL.trilha = "novo";
+  nlMsgUser("Preciso de ajuda");
+  nlMenuSuporteNovo();
+}
+function nlMenuSuporteNovo(){
+  NL.trilha = "novo";
+  nlMsgLiss("Claro! Me diz o que tá acontecendo:", function(){
+    nlChips([
+      { rotulo:"Não estou conseguindo conectar", acao:nlErrosMenu },
+      { rotulo:"O aplicativo é seguro?", acao:nlSupSeguro },
+      { rotulo:"O aplicativo é legalizado?", acao:nlSupLegal },
+      { rotulo:"Quero rotear", acao:nlSupRotear },
+      { rotulo:"Funciona em tablet?", acao:nlSupTablet },
+      { rotulo:"Funciona em roteadores?", acao:nlSupRoteador },
+      { rotulo:"Funciona na multimídia do carro?", acao:nlSupCarro },
+      { rotulo:"Nenhuma dessas opções", acao:nlIrParaLiss }
+    ]);
+  });
+}
+function nlVoltarSuporte(){
+  if(NL.trilha === "novo"){ nlMenuSuporteNovo(); return; }
+  nlSuporteAtivo();
+}
+function nlFimSuporte(){
+  if(NL.trilha === "novo"){
+    return [{ rotulo:"Deu certo, ver preços e planos", acao:nlMostrarPlanos }, { rotulo:"Tenho outra dúvida", acao:nlSuporteNovo }];
+  }
+  return [{ rotulo:"Resolvido, obrigado", acao:nlFecharSuporte }, { rotulo:"Tenho outra dúvida", acao:nlSuporteAtivo }];
+}
+function nlFimPergunta(){
+  if(NL.trilha === "novo"){
+    return [{ rotulo:"Ver preços e planos", acao:nlMostrarPlanos }, { rotulo:"Tenho outra dúvida", acao:nlSuporteNovo }];
+  }
+  return nlFimSuporte();
+}
+function nlFecharSuporte(){
+  nlMsgUser("Resolvido, obrigado");
+  if(NL.diasRestantes !== undefined && NL.diasRestantes !== null && !isNaN(NL.diasRestantes) && NL.diasRestantes > 0 && NL.diasRestantes < 10){
+    nlMsgLiss("Que bom que resolvemos! Já que você está por aqui: o seu acesso vence em <b>" + NL.diasRestantes + " dias</b>. Quer garantir a renovação agora?", function(){
+      nlChips([{ rotulo:"Quero renovar", acao:nlRenovarPlanos }, { rotulo:"Agora não", sec:true, acao:nlEncerrar }]);
+    });
+  } else { nlEncerrar(); }
+}
+function nlErrosMenu(){
+  nlMsgUser("Não estou conseguindo conectar");
+  nlMsgLiss("Me diz o que está acontecendo ou se aparece alguma mensagem dessas no aplicativo:", function(){
+    nlChips([
+      { rotulo:"Procurando rede utilizável", acao:nlErroRota },
+      { rotulo:"Conecta mas não navega", acao:nlErroNavega },
+      { rotulo:"Internet lenta", acao:nlErroLenta },
+      { rotulo:"Acesso negado", acao:nlErroNegado },
+      { rotulo:"Escolha uma configuração", acao:nlErroConfig },
+      { rotulo:"Nenhuma configuração encontrada", acao:nlErroSemConfig },
+      { rotulo:"Limite ultrapassado", acao:nlErroLimite },
+      { rotulo:"Nenhuma dessas opções", acao:nlVoltarSuporte }
+    ]);
+  });
+}
+function nlErroRota(){
+  NL.ultimaOrientacao = "rota";
+  nlMsgLiss("Esse comportamento é sinal de que a sua rede com a operadora está enfrentando dificuldades. Por isso o aplicativo não conecta, ou não consegue gerar dados de navegação... Vamos tentar resolver.", function(){
+    nlMsgLiss("<b>01)</b> Dentro do aplicativo, você precisa testar <b>TODAS</b> as opções da sua operadora, uma por uma. Uma delas costuma conectar.", function(){
+      nlMsgLiss("<b>02)</b> Se nenhuma conectar, ligue o <b>modo avião</b>, espere 2 segundos, desligue o modo avião e teste todas as opções de novo.", function(){
+        nlMsgLiss("No pré-pago, com o saldo da recarga válido isso costuma resolver rápido. Com o saldo expirado o aplicativo continua funcionando por um bom tempo, porém com mais dificuldade, então pode ser que precise insistir mais um pouco nas etapas 01 e 02. O mesmo vale se você estiver numa área de sinal ruim.", function(){
+          nlMsgLiss("Agora, se mesmo insistindo nesse procedimento não conectar de jeito nenhum, é sinal de que a operadora cancelou o funcionamento da sua rede, e sem a <b>rede utilizável</b> o aplicativo não consegue conectar. No pré-pago, só volta a funcionar com uma nova <b>recarga de crédito mínimo</b> com a operadora; no pós-pago ou controle, é preciso colocar o pagamento do plano <b>em dia</b> com a operadora.", function(){
+            nlChips(nlFimSuporte());
+          });
+        });
+      });
+    });
+  });
+}
+function nlErroNavega(){
+  NL.ultimaOrientacao = "navega";
+  nlMsgLiss("Esse comportamento é sinal de que a sua rede com a operadora está enfrentando dificuldades. Por isso o aplicativo não conecta, ou não consegue gerar dados de navegação... Vamos tentar resolver.", function(){
+    nlMsgLiss("<b>01)</b> Dentro do aplicativo, você precisa testar <b>TODAS</b> as opções da sua operadora, uma por uma. Uma delas costuma conectar.", function(){
+      nlMsgLiss("<b>02)</b> Se nenhuma conectar, ligue o <b>modo avião</b>, espere 2 segundos, desligue o modo avião e teste todas as opções de novo.", function(){
+        nlMsgLiss("No pré-pago, com o saldo da recarga válido isso costuma resolver rápido. Com o saldo expirado o aplicativo continua funcionando por um bom tempo, porém com mais dificuldade, então pode ser que precise insistir mais um pouco nas etapas 01 e 02. O mesmo vale se você estiver numa área de sinal ruim.", function(){
+          nlChips(nlFimSuporte());
+        });
+      });
+    });
+  });
+}
+function nlErroLenta(){
+  NL.ultimaOrientacao = "lenta";
+  nlMsgLiss("Se a internet está lenta, não tem relação com o aplicativo da Netliss, normalmente é a rede da sua operadora que está congestionada ou com sinal fraco naquele momento. Você pode tentar os passos abaixo.", function(){
+    nlMsgLiss("<b>01)</b> Dentro do aplicativo, teste as outras opções da sua operadora — algumas rotas ficam mais rápidas que outras.", function(){
+      nlMsgLiss("<b>02)</b> Se você usa 5G, mude o tipo de rede do celular para <b>4G (LTE)</b>. O 5G fica trocando de antena o tempo todo e isso atrapalha a conexão.", function(){
+        nlMsgLiss("<b>03)</b> Ligue o modo avião por 2 segundos, desligue e conecte de novo. Isso força o celular a pegar uma antena melhor.", function(){
+          nlChips(nlFimSuporte());
+        });
+      });
+    });
+  });
+}
+function nlErroNegado(){
+  NL.ultimaOrientacao = "negado";
+  nlMsgLiss("Esse aviso acontece por dois motivos:", function(){
+    nlMsgLiss("<b>1)</b> Seu usuário ou senha podem estar incorretos — verifique como você digitou, com atenção às letras maiúsculas e minúsculas.", function(){
+      nlMsgLiss("<b>2)</b> O prazo do seu acesso ou teste já expirou.", function(){
+        nlChips(nlFimSuporte());
+      });
+    });
+  });
+}
+function nlUsuarioConhecido(){
+  return NL.usuarioApp || NL.vendaUser || NL.copiaUser || "";
+}
+function nlErroLimite(){
+  nlMsgUser("Limite ultrapassado");
+  NL.ultimaOrientacao = "limite";
+  nlMsgLiss("Essa mensagem aparece quando o seu acesso é usado em mais aparelhos do que o seu plano permite.", function(){
+    nlMsgLiss("Vou abrir um chamado agora e, assim que o seu acesso for liberado, você recebe a confirmação por e-mail.", function(){
+      NL.chamadoProblema = "LIMITE ULTRAPASSADO - aparece essa mensagem no aplicativo e nao consigo conectar.";
+      nlGarantirTicket();
+      nlMsgLiss("Me confirme os dados, abaixo por favor:", function(){
+        nlFormChamadoLimite();
+      });
+    });
+  });
+}
+function nlFormChamadoLimite(){
+  var u = NL.chUser || nlUsuarioConhecido();
+  var e = NL.chEmail || "";
+  nlForm("<input id='nl-ch-user' type='text' placeholder='Seu nome de usuário no aplicativo' value='" + nlEscapar(u) + "' maxlength='40'>" +
+         "<input id='nl-ch-email' type='email' placeholder='Seu melhor e-mail' value='" + nlEscapar(e) + "' maxlength='80'>" +
+         "<button class='botao' onclick='nlEnviarChamado()'>Abrir chamado</button>");
+}
+function nlFormChamadoGeral(){
+  nlForm("<input id='nl-ch-email' type='email' placeholder='Seu melhor e-mail' value='" + nlEscapar(NL.chEmail || "") + "' maxlength='80'>" +
+         "<input id='nl-ch-zap' type='tel' placeholder='WhatsApp com DDD' value='" + nlEscapar(NL.chZap || "") + "' maxlength='16'>" +
+         "<button class='botao' onclick='nlEnviarChamado()'>Abrir chamado</button>");
+}
+var NL_CONFIRMA = "Por favor, antes de avançarmos confirme se seus dados estão realmente corretos. Não nos responsabilizamos caso você tenha fornecido informações incorretas!";
+function nlConfirmarDados(seguir, corrigir){
+  var fs = (typeof seguir === "string") ? window[seguir] : seguir;
+  var fc = (typeof corrigir === "string") ? window[corrigir] : corrigir;
+  nlMsgLiss(NL_CONFIRMA, function(){
+    nlChips([
+      { rotulo:"Confirmo, pode seguir", acao:fs },
+      { rotulo:"Deixa eu corrigir", sec:true, acao:fc }
+    ]);
+  });
+}
+function nlErroConfig(){
+  NL.ultimaOrientacao = "config";
+  nlMsgLiss("Esse aviso quer dizer que você colocou usuário e senha, mas ainda não escolheu nenhuma opção da sua operadora na lista do aplicativo. Essa opção fica logo acima de onde você inseriu o nome de usuário.", function(){
+    nlChips(nlFimSuporte());
+  });
+}
+function nlErroSemConfig(){
+  NL.ultimaOrientacao = "semconfig";
+  nlMsgLiss("Isso quer dizer que, por algum motivo, o aplicativo não conseguiu baixar ou carregar as configurações.", function(){
+    nlMsgLiss("<b>1)</b> Conecte-se em qualquer internet (Wi-Fi ou dados).", function(){
+      nlMsgLiss("<b>2)</b> No aplicativo, toque no ícone de atualizar (as setas em círculo, ao lado do botão de conectar).", function(){
+        nlMsgLiss("<b>3)</b> Se não resolver, desinstale o aplicativo e instale de novo pela Play Store.", function(){
+          nlMsgLiss("Esse é o procedimento completo — as configurações ficam no nosso banco de dados e é o aplicativo que precisa baixá-las. Não há nada que a gente consiga forçar daqui.", function(){
+            var b = [{ rotulo:"Baixar na Play Store", manter:true, acao:nlAbrirPlayStore }];
+            nlChips(b.concat(nlFimSuporte()));
+          });
+        });
+      });
+    });
+  });
+}
+function nlSupSeguro(){
+  NL.ultimaOrientacao = "seguro";
+  nlMsgUser("O aplicativo é seguro?");
+  nlMsgLiss("É sim. Toda a sua navegação passa dentro de um túnel VPN com criptografia de nível militar entre o seu celular e os nossos servidores.", function(){
+    nlMsgLiss("Ninguém consegue ver o que você acessa ou digita. Na prática, é mais seguro do que usar Wi-Fi público.", function(){
+      nlMsgLiss("Uma coisa importante: privacidade não é impunidade. Se você usar a Netliss para praticar qualquer tipo de ato criminoso, responderá integralmente perante a lei, e nós iremos colaborar com as autoridades policiais em qualquer investigação necessária para identificar os responsáveis.", function(){
+        nlChips(nlFimPergunta());
+      });
+    });
+  });
+}
+function nlSupLegal(){
+  NL.ultimaOrientacao = "legal";
+  nlMsgUser("O aplicativo é legalizado?");
+  nlMsgLiss("É sim, 100% legalizado. A Netliss é uma empresa de tecnologia fundada em 2019, classificada como Serviço de Valor Adicionado — o SVA, previsto na Lei Geral de Telecomunicações, no artigo 61 da Lei nº 9.472/97.", function(){
+    nlMsgLiss("A nossa responsabilidade é desenvolver o aplicativo e manter os nossos servidores. Não somos operadora de telefonia, portanto: não temos relação alguma com a ANATEL, não vendemos chip, não vendemos sinal, não temos antena e coisas desse tipo.", function(){
+      nlChips(nlFimPergunta());
+    });
+  });
+}
+function nlSupTablet(){
+  NL.ultimaOrientacao = "tablet";
+  nlMsgUser("Funciona em tablet?");
+  nlMsgLiss("Funciona, se o tablet for Android e aceitar o chip da operadora — pode ser o chip virtual também (eSIM), como se fosse um celular. Ou se você rotear do seu celular para o tablet.", function(){
+    nlChips(nlFimPergunta());
+  });
+}
+function nlSupRoteador(){
+  NL.ultimaOrientacao = "roteador";
+  nlMsgUser("Funciona em roteadores?");
+  nlMsgLiss("A Netliss é uma combinação do aplicativo mais o chip da operadora. Em modem 4G, mini roteador ou coisas desse tipo, normalmente não funciona.", function(){
+    nlMsgLiss("Se você quiser tentar, fica por sua conta e risco: nós da Netliss não damos suporte nem garantia para esse tipo de uso.", function(){
+      nlChips(nlFimPergunta());
+    });
+  });
+}
+function nlSupCarro(){
+  NL.ultimaOrientacao = "carro";
+  nlMsgUser("Funciona na multimídia do carro?");
+  nlMsgLiss("Existem clientes que conseguem usar sem problema nenhum, desde que seja Android e aceite o chip da operadora. Pode ser o chip virtual também (eSIM). Mas nós não garantimos e não damos suporte para instalação em central multimídia de veículo.", function(){
+    nlMsgLiss("Se quiser aprender como funciona no celular e tentar, não tem problema algum, porém é por sua conta e risco.", function(){
+      nlChips(nlFimPergunta());
+    });
+  });
+}
+
+// ---------------- SUPORTE: TRILHA CLIENTE ATIVO ----------------
+function nlSuporteAtivo(){
+  NL.trilha = "ativo";
+  nlMsgLiss("Certo! Me diz o que está acontecendo:", function(){
+    nlChips([
+      { rotulo:"Não estou conseguindo conectar", acao:nlErrosMenu },
+      { rotulo:"Está caindo toda hora", acao:nlSupCaindo },
+      { rotulo:"Link do aplicativo", acao:nlSupLinkApp },
+      { rotulo:"Quero rotear", acao:nlSupRotear },
+      { rotulo:"Cancelar ou mudar de plano", acao:nlSupCancelar },
+      { rotulo:"Nenhuma dessas opções", acao:nlIrParaLiss }
+    ]);
+  });
+}
+function nlSupCaindo(){
+  NL.ultimaOrientacao = "caindo";
+  nlMsgLiss("Isso não é com a Netliss, mas sim com a sua rede ou algo desse tipo... Mas algum desses procedimentos pode te ajudar:", function(){
+    nlMsgLiss("<b>1)</b> Se você usa 5G, pode ser que mudar o tipo de rede do celular para <b>4G (LTE)</b> resolva. O 5G fica trocando automaticamente de antena o tempo todo, e isso derruba a conexão.", function(){
+      nlMsgLiss("<b>2)</b> Veja se o modo de economia de bateria, ou algo parecido, está ativo — configurações desse tipo podem fechar o aplicativo automaticamente.", function(){
+        nlMsgLiss("<b>3)</b> Não use o aplicativo com o Wi-Fi ligado: os dois juntos travam a conexão. Para usar a Netliss, desligue o Wi-Fi antes.", function(){
+          nlChips(nlFimSuporte());
+        });
+      });
+    });
+  });
+}
+function nlSupLinkApp(){
+  window.open(CFG.playStore, "_blank");
+  nlChips(nlFimSuporte());
+}
+function nlSupRotear(){
+  NL.ultimaOrientacao = "rotear";
+  nlMsgLiss("Lembre-se: o roteamento depende do seu aparelho e não temos como dar suporte se não funcionar. Para TV normalmente não dá certo.", function(){
+    nlMsgLiss("Seguem abaixo os vídeos tutoriais para te ajudar:", function(){
+      var _tit = ["Configurar o celular que vai rotear", "Conectar de outro celular", "Conectar de um notebook"];
+      for(var _v = 0; _v < _tit.length; _v++){
+        nlCard("<div class='titulo'>" + _tit[_v] + "</div>" +
+          "<div style='position:relative;padding-bottom:56%;height:0;border-radius:12px;overflow:hidden;margin:8px 0 11px;border:1px solid rgba(255,255,255,.09)'><iframe src='" + CFG.videosRot[_v] + "' loading='lazy' style='position:absolute;top:0;left:0;width:100%;height:100%;border:0' title='" + _tit[_v] + "' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' referrerpolicy='strict-origin-when-cross-origin' allowfullscreen></iframe></div>" +
+          "<button class='botao' style='width:100%;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none' data-vivo='1' onclick='nlVideoGrande(" + (_v + 1) + ")'>Ver em tela maior</button>");
+      }
+      nlChips(nlFimSuporte());
+    });
+  });
+}
+function nlAbrirPlayStore(){ window.open(CFG.playStore, "_blank"); }
+function nlVideoRot1(){ window.open(CFG.videoRot1, "_blank"); }
+function nlVideoRot2(){ window.open(CFG.videoRot2, "_blank"); }
+function nlVideoRot3(){ window.open(CFG.videoRot3, "_blank"); }
+function nlSupCancelar(){
+  NL.ultimaOrientacao = "cancelar";
+  nlMsgLiss("Para cancelar é simples: basta não renovar quando o seu plano terminar. O acesso encerra sozinho, sem dívida e sem multa — não trabalhamos com fidelidade.", function(){
+    nlMsgLiss("Para mudar de plano, você escolhe a nova opção na hora da renovação.", function(){
+      nlChips(nlFimSuporte());
+    });
+  });
+}
+
+function nlCopiarTexto(v){
+  if(NL.silencioso){ return; }
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(String(v)); }
+  else { nlCopiarFallback(v); }
+}
+
+// ---------------- RECUPERAR MEU ACESSO ----------------
+function nlRecuperarAcesso(){
+  nlMsgUser("Esqueci meu usuário");
+  nlMsgLiss("Essa recuperação é nova aqui no chat e funciona apenas para quem comprou por aqui informando o e-mail. Se você comprou antes ou por outro canal, não será possível recuperar o seu acesso.", function(){
+    nlChips([
+      { rotulo:"Comprei pelo chat", acao:nlFormRecuperar }
+    ]);
+  });
+}
+function nlFormRecuperar(){
+  nlMsgUser("Comprei pelo chat");
+  nlMsgLiss("Preciso de duas informações: o e-mail que você informou na compra e a data em que ela foi feita. Se não lembrar a data, ela aparece no extrato do seu banco.", function(){
+    nlForm("<input id='nl-rec-email' type='email' placeholder='E-mail da compra' value='" + nlEscapar(NL.recEmail || "") + "' maxlength='80'>" +
+           "<input id='nl-rec-data' type='date' value='" + nlEscapar(NL.recBruta || "") + "' style='margin-top:8px'>" +
+           "<button class='botao' style='margin-top:8px' onclick='nlEnviarRecuperacao()'>Recuperar meu acesso</button>");
+  });
+}
+function nlEnviarRecuperacao(){
+  if(nlTrancado("recuperar")){ return; }
+  var email = document.getElementById("nl-rec-email").value.trim();
+  var bruta = document.getElementById("nl-rec-data").value;
+  if(email.indexOf("@") < 1 || email.indexOf(".") < 3){ nlDestravar(); alert("Digite um e-mail válido"); return; }
+  if(!bruta || bruta.length < 10){ nlDestravar(); alert("Escolha a data da compra"); return; }
+  var partes = bruta.split("-");
+  var data = partes[2] + "/" + partes[1] + "/" + partes[0];
+  NL.recEmail = email; NL.recBruta = bruta;
+  nlMsgUser(email + " - " + data);
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"recuperar", email: email, data_compra: data });
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlFormRecuperar); return; }
+    if(r && r.success){
+      nlMsgLiss("Pronto! Enviamos os seus dados de acesso para <b>" + nlEscapar(email) + "</b>. Confere a sua caixa de entrada e também o spam.", function(){
+        nlEncerrarEm(1500);
+      });
+    } else {
+      nlMsgLiss("Não encontrei nenhuma compra com esse e-mail nessa data. Confere o extrato do seu banco e tenta de novo com a data exata.", function(){
+        nlChips([{ rotulo:"Tentar de novo", acao:nlFormRecuperar }, { rotulo:"Nenhuma dessas opções", acao:nlIrParaLiss }]);
+      });
+    }
+  }, 400);
+}
+
+function nlReportarErro(){
+  nlMsgUser("Reportar erro");
+  nlApiFogo({ acao:"reportar_erro", assunto:"Erro ao gerar o teste gratis", operadora: NL.op || "", modalidade: NL.mod || "" });
+  nlMsgLiss("Erro reportado! Nossa equipe técnica já foi avisada e vai resolver. Tente novamente mais tarde para gerar o seu teste. Obrigada por avisar!", function(){
+    nlChips([{ rotulo:"Tentar novamente", acao:nlGerarTeste }, { rotulo:"Ver os planos", acao:nlMostrarPlanos }]);
+  });
+}
+
+
+// ---------------- PLANOS E PAGAMENTO ----------------
+async function nlCarregarAvisos(){
+  var cache = null;
+  try{ cache = JSON.parse(localStorage.getItem("nl_avisos") || "null"); }catch(e){ cache = null; }
+  if(cache && cache.quando && (Date.now() - cache.quando) < 21600000){
+    NL.vitalicioLigado = (cache.vitalicio === "SIM");
+    NL.avisoTexto = cache.aviso || "";
+    return;
+  }
+  var a = await nlApi({ acao:"avisos" });
+  var vit = (a && a.vitalicio_ligado ? String(a.vitalicio_ligado).toUpperCase() : "NAO");
+  var txt = (a && a.aviso_ligado && String(a.aviso_ligado).toUpperCase() === "SIM") ? (a.aviso_texto || "") : "";
+  NL.vitalicioLigado = (vit === "SIM");
+  NL.avisoTexto = txt;
+  try{ localStorage.setItem("nl_avisos", JSON.stringify({ vitalicio: vit, aviso: txt, quando: Date.now() })); }catch(e){}
+}
+async function nlMostrarPlanos(){
+  NL.modoRenov = false;
+  await nlCarregarAvisos();
+  nlMsgLiss("Todos os nossos planos com pagamento seguro e liberação imediata:", function(){
+    var total = NL.vitalicioLigado ? 4 : 3;
+    for(var i = 0; i < total; i++){
+      var k = NL_PLANOS[i];
+      var p = CFG.planos[k];
+      nlCard((k === "TRIMESTRAL" ? "<div class='tag'>MAIS VENDIDO</div>" : "") +
+        "<div class='titulo'>" + p.nome + "</div>" +
+        "<div class='preco'>" + p.preco + "</div>" +
+        "<div class='desc'>" + p.desc + "</div>" +
+        "<button class='botao' onclick='nlPlanoN(" + i + ")'>Escolher este plano</button>",
+        { cls: (k === "TRIMESTRAL" ? "destaque" : ""), nl: "plano" });
+    }
+  });
+}
+function nlPlanoN(i){
+  var k = NL_PLANOS[i];
+  if(!k || !CFG.planos[k]){ return; }
+  NL.modoRenov = false;
+  nlEscolherPlano(k);
+}
+function nlMostrarMetodos(){
+  nlMsgLiss("E como você prefere pagar?", function(){
+    nlChips([
+      { rotulo:"PIX", acao:nlFormPix },
+      { rotulo:"Cartão de crédito", acao:nlFormCartao }
+    ]);
+  });
+}
+function nlEscolherPlano(k){
+  NL.planoAtual = k;
+  nlMsgUser(CFG.planos[k].nome);
+  if(k === "VITALICIO"){ nlVitalicio(); return; }
+  nlAvisoCompra("nlPerguntarMetodo");
+}
+function nlPerguntarMetodo(){
+  nlMsgLiss("Ótima escolha! E como você prefere pagar?", function(){
+    nlChips([
+      { rotulo:"PIX", acao:nlFormPix },
+      { rotulo:"Cartão de crédito", acao:nlFormCartao }
+    ]);
+  });
+}
+function nlVitalicio(){
+  nlMsgLiss("Excelente escolha! O Vitalício é o nosso melhor negócio: você paga uma vez e usa por 10 anos, com até 4 pessoas conectadas.<br><br>Por transparência: o nosso sistema permite criar acessos de no máximo 10 anos, e é exatamente esse o prazo que você recebe. Nada de letra miúda.<br><br>E você escolhe como pagar: <b>R$ 390,00 à vista no PIX</b>, com desconto — ou <b>R$ 490,00 no cartão</b>, em até 10x de R$ 49,00.", function(){
+    nlChips([
+      { rotulo:"Pagar R$390 no PIX", acao:nlVitalPix },
+      { rotulo:"Parcelar R$490 no cartão", acao:nlVitalCartao }
+    ]);
+  });
+}
+function nlVitalPix(){
+  NL.vitalMetodo = "pix";
+  if(NL.modoRenov && NL.contaRenov){ nlFormPix(); return; }
+  nlAvisoCompra("nlFormPix");
+}
+function nlVitalCartao(){
+  NL.vitalMetodo = "cartao";
+  if(NL.modoRenov && NL.contaRenov){ nlFormCartao(); return; }
+  nlAvisoCompra("nlFormCartao");
+}
+function nlAvisoCompra(seguir){
+  var fs = (typeof seguir === "string") ? window[seguir] : seguir;
+  nlMsgLiss("Confirme que você recebeu o teste gratuito e que funcionou corretamente, e que ao efetuar o pagamento você está de acordo que depois de confirmado, está ciente de que <b>não há reembolsos</b>.", function(){
+    nlMsgLiss("Se ficou alguma dúvida, podemos liberar mais um teste — a gente prefere que você compre com segurança do que se arrependa depois. Ao continuar, você confirma que testou e concorda com essa condição.", function(){
+    nlChips([
+      { rotulo:"Concordo, continuar", acao:fs },
+      { rotulo:"Preciso de ajuda", acao:nlSuporteNovo }
+    ]);
+    });
+  });
+}
+function nlPlanoId(p){
+  if(!p){ return 0; }
+  if(NL.planoAtual === "VITALICIO" && NL.vitalMetodo === "cartao"){ return p.idCartao; }
+  return p.id;
+}
+function nlParcelas(){
+  return (NL.planoAtual === "VITALICIO" && NL.vitalMetodo === "cartao") ? 10 : 1;
+}
+function nlFormPix(){
+  if(NL.planoAtual === "VITALICIO"){ NL.vitalMetodo = "pix"; }
+  nlMsgLiss("Preencha os dados abaixo para gerar o seu <b>código PIX</b>:<br><br><i>A exigência do CPF nas cobranças por PIX cumpre a Resolução BCB nº 1/2020 do Banco Central, garantindo a rastreabilidade das transações para prevenir lavagem de dinheiro ou fraudes.</i><br><br><b>ATENÇÃO ao e-mail:</b> digite um e-mail real e correto, porque é para ele que enviamos o seu acesso e é por ele que você recupera as credenciais se precisar.", function(){
+    nlForm("<input id='nl-pg-nome' type='text' placeholder='Seu nome completo' maxlength='60'>" +
+           "<input id='nl-pg-email' type='email' placeholder='" + (NL.emailCliente ? "E-mail do cliente" : "Seu e-mail") + "' value='" + (NL.emailCliente || "") + "' maxlength='80'>" +
+           "<input id='nl-pg-cpf' type='tel' placeholder='Seu CPF (só números)' maxlength='11'>" +
+           "<button class='botao' onclick='nlValidarDadosPix()'>Gerar código PIX</button>");
+    if(NL.nome && NL.nome.length >= 5){ document.getElementById("nl-pg-nome").value = NL.nome; }
+    nlRepreencherPagamento();
+  });
+}
+function nlRepreencherPagamento(){
+  try{
+    if(NL.pgNome){ document.getElementById("nl-pg-nome").value = NL.pgNome; }
+    if(NL.pgEmail){ document.getElementById("nl-pg-email").value = NL.pgEmail; }
+    if(NL.pgCpf){ document.getElementById("nl-pg-cpf").value = NL.pgCpf; }
+  }catch(e){}
+}
+function nlValidarDadosPix(){
+  if(nlTrancado("cobranca")){ return; }
+  var _cn = document.getElementById("nl-pg-nome");
+  var _ce = document.getElementById("nl-pg-email");
+  var _cc = document.getElementById("nl-pg-cpf");
+  if(!_cn || !_ce || !_cc){ return; }
+  var nome = _cn.value.trim();
+  var email = _ce.value.trim();
+  var cpf = nlSoNumeros(_cc.value);
+  if(nome.length < 5){ nlDestravar(); alert("Digite seu nome completo"); return; }
+  if(email.indexOf("@") < 1 || email.indexOf(".") < 3){ nlDestravar(); alert("Digite um e-mail válido"); return; }
+  if(cpf.length !== 11){ nlDestravar(); alert("O CPF precisa ter 11 números"); return; }
+  NL.pgNome = nome; NL.pgEmail = email; NL.pgCpf = cpf;
+  nlCpfGuardar(cpf);
+  nlMsgUser(nome);
+  nlConfirmarDados("nlConfirmouPix", "nlFormPix");
+}
+function nlConfirmouPix(){
+  if(!NL.pgCpf){ NL.pgCpf = nlCpfLer(); }
+  if(!NL.pgCpf || !NL.pgEmail || !NL.pgNome){ nlFormPix(); return; }
+  nlApiFogo({ acao:"nome", nome:NL.pgNome, email:NL.pgEmail });
+  nlPagarPix();
+}
+function nlPagarPix(){
+  nlDigitar(async function(){
+    var p = CFG.planos[NL.planoAtual];
+    if(!p){ nlMostrarPlanos(); return; }
+    NL.metodoPg = "pix";
+    if(NL.planoAtual === "VITALICIO"){ NL.vitalMetodo = "pix"; }
+    var acaoPg = (NL.modoRenov && NL.contaRenov) ? "pagamento_renovar" : "pagamento_criar";
+    var _om = nlOpModCliente();
+    var corpo = { acao: acaoPg, metodo:"pix", plan_id: nlPlanoId(p), nome: NL.pgNome, email: NL.pgEmail, cpf: NL.pgCpf, operadora: _om.operadora, modalidade: _om.modalidade };
+    if(NL.modoRenov && NL.contaRenov){ corpo.account_id = NL.contaRenov; corpo.usuario = NL.usuarioApp || ""; }
+    nlEsperaLigar();
+    var r = await nlApi(corpo);
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlFormPix); return; }
+    if(r && r.success && r.pix){
+      NL.pixImg = r.pix.qr_code_base64; NL.pixTexto = r.pix.qr_code_text;
+      var _fim = nlExpiraPix(r);
+      nlMsgLiss("Aqui está o seu PIX do <b>" + p.nome + "</b> (" + p.preco + "). Escaneie o QR Code ou copie o código PIX.", function(){
+        nlCard("<img src='data:image/png;base64," + nlSoBase64(r.pix.qr_code_base64) + "' style='width:180px;display:block;margin:0 auto 10px;border-radius:10px;background:#fff;padding:6px'>" +
+          "<div class='pix-codigo' id='nl-pix-txt'>" + nlEscapar(r.pix.qr_code_text) + "</div>" +
+          "<button class='botao' data-vivo='1' style='width:100%' onclick='nlCopiarPix()'>Copiar código Pix</button>", { id: "nl-card-pix" });
+        nlIniciarPolling(r.payment_id, p, { metodo: "pix", fim: _fim });
+      });
+    } else {
+      if(!r || !r.message){ nlInstabilidade(nlFormPix); return; }
+      nlMsgLiss("Opa: " + nlEscapar(r.message) + ".<br>Vamos tentar de novo?", function(){
+        nlChips([
+          { rotulo:"Tentar novamente", acao:nlFormPix },
+          { rotulo:"Pagar com cartão", acao:nlFormCartao }
+        ]);
+      });
+    }
+  }, 400);
+}
+function nlExpiraPix(r){
+  var agora = Date.now();
+  var lista = [];
+  try{
+    var px = r.pix || {};
+    lista = [px.expires_at, px.expiration_date, px.date_of_expiration, px.expiration, r.expires_at, r.expiration_date, r.date_of_expiration];
+  }catch(e){}
+  for(var i = 0; i < lista.length; i++){
+    if(!lista[i]){ continue; }
+    var txt = String(lista[i]);
+    var posT = txt.indexOf("T");
+    if(posT < 0){ continue; }
+    var cauda = txt.substring(posT);
+    if(cauda.indexOf("Z") < 0 && cauda.indexOf("+") < 0 && cauda.indexOf("-") < 0){ continue; }
+    var t = Date.parse(txt);
+    if(!isNaN(t) && t > agora + 60000 && t < agora + 86400000){ return t; }
+  }
+  return agora + CFG.pixMinutos * 60000;
+}
+function nlCopiarPix(){
+  var el = document.getElementById("nl-pix-txt");
+  if(!el){ return; }
+  nlCopiarTexto(el.textContent);
+  nlAvisinho("código PIX copiado");
+}
+function nlLerPendente(){
+  var pend = null;
+  try{ pend = JSON.parse(localStorage.getItem("nl_pag_pendente") || "null"); }catch(e){ pend = null; }
+  return (pend && pend.id) ? pend : null;
+}
+function nlGravarPendente(pend){
+  try{ localStorage.setItem("nl_pag_pendente", JSON.stringify(pend)); }catch(e){}
+}
+function nlRemoverPix(){
+  try{ var c = document.getElementById("nl-card-pix"); if(c){ c.remove(); } }catch(e){}
+}
+function nlRetomarPagamento(){
+  var pend = nlLerPendente();
+  if(!pend){
+    nlPararCrono();
+    nlRemoverPix();
+    return;
+  }
+  NL.pagPendente = pend;
+  if(pend.email && !NL.pgEmail){ NL.pgEmail = pend.email; }
+  if(pend.metodo && !NL.metodoPg){ NL.metodoPg = pend.metodo; }
+  var cartao = (pend.metodo === "credit_card");
+  var naTela = (document.getElementById("nl-card-pix") || document.getElementById("nl-crono-box")) ? true : false;
+  if(cartao && Date.now() - (pend.inicio || 0) < 1800000 && (NL.telaAtual === "nlPagarCartao" || NL.telaAtual === "nlTokenizarEPagar")){ naTela = true; }
+  NL.pgAtivo = naTela;
+  if(!naTela){ return; }
+  if(naTela && !cartao){ nlIniciarCrono(); }
+  if(naTela && cartao){ NL.pollRapido = Math.max(NL.pollRapido || 0, 10); }
+  nlVerificarPagamento(true).then(function(){ nlAgendarVerificacao(); }, function(){ nlAgendarVerificacao(); });
+}
+function nlPararVerificacao(){
+  if(NL.pollProx){ clearTimeout(NL.pollProx); NL.pollProx = null; }
+}
+function nlAgendarVerificacao(){
+  nlPararVerificacao();
+  if(!NL.pgAtivo){ return; }
+  var pend = NL.pagPendente || nlLerPendente();
+  if(!pend){ return; }
+  if(Date.now() > (pend.fim || 0) + 600000){ return; }
+  var espera = (NL.pollRapido > 0) ? 6000 : 90000;
+  NL.pollProx = setTimeout(function(){
+    NL.pollProx = null;
+    if(NL.pollRapido > 0){ NL.pollRapido = NL.pollRapido - 1; }
+    nlVerificarPagamento(true).then(function(){ nlAgendarVerificacao(); }, function(){ nlAgendarVerificacao(); });
+  }, espera);
+}
+function nlIniciarPolling(paymentId, plano, extra){
+  var ex = extra || {};
+  nlInertes("plano");
+  NL.pgAtivo = true;
+  var agora = Date.now();
+  NL.pagPendente = { id: String(paymentId), plano: { nome: plano.nome, preco: plano.preco }, inicio: agora,
+                     email: NL.pgEmail || "", metodo: ex.metodo || NL.metodoPg || "pix",
+                     fim: ex.fim || (agora + CFG.pixMinutos * 60000) };
+  nlGravarPendente(NL.pagPendente);
+  if(NL.pagPendente.metodo === "credit_card"){
+    NL.pollRapido = 20;
+    nlAgendarVerificacao();
+    return;
+  }
+  nlIniciarCrono();
+}
+function nlSalvarPendente(){
+  try{ nlSalvar("netliss_pg", { id: NL.pgId, plano: NL.planoAtual, email: NL.pgEmail }, 604800000); }catch(e){}
+}
+function nlLimparPendente(){
+  NL.pgAtivo = false;
+  NL.pagPendente = null;
+  nlPararVerificacao();
+  try{ localStorage.removeItem("nl_pag_pendente"); }catch(e){}
+}
+function nlValorNum(txt){
+  var t = String(txt || "");
+  var limpo = "";
+  for(var i = 0; i < t.length; i++){
+    var c = t.charAt(i);
+    if(c >= "0" && c <= "9"){ limpo = limpo + c; }
+    else if(c === ","){ limpo = limpo + "."; }
+  }
+  var n = parseFloat(limpo);
+  return isNaN(n) ? 0 : n;
+}
+function nlCronoHtml(){
+  return "<div id='nl-crono-box' style='text-align:center'>" +
+    "<div style='font-size:12px;color:var(--suave);letter-spacing:.6px'>AGUARDANDO CONFIRMAÇÃO DO PAGAMENTO</div>" +
+    "<div id='nl-crono' style='font-size:30px;font-weight:700;color:var(--neon);font-family:var(--fonte-display);margin:8px 0 4px'>--:--</div>" +
+    "<div style='font-size:12.5px;color:var(--suave);line-height:1.5'>Assim que o pagamento cair, eu te aviso aqui e envio o acesso para o seu e-mail.</div>" +
+    "</div>";
+}
+function nlPintarCrono(){
+  var el = document.getElementById("nl-crono");
+  if(!el){ return; }
+  var resta = NL.cronoFim - Date.now();
+  if(resta < 0){ resta = 0; }
+  var seg = Math.floor(resta / 1000);
+  var h = Math.floor(seg / 3600);
+  var m = Math.floor((seg % 3600) / 60);
+  var sg = seg % 60;
+  var txt = (m < 10 ? "0" : "") + m + ":" + (sg < 10 ? "0" : "") + sg;
+  if(h > 0){ txt = h + ":" + (m < 10 ? "0" : "") + m + ":" + (sg < 10 ? "0" : "") + sg; }
+  el.textContent = txt;
+}
+function nlPararCrono(){
+  if(NL.cronoTick){ clearInterval(NL.cronoTick); NL.cronoTick = null; }
+  if(NL.cronoPoll){ clearInterval(NL.cronoPoll); NL.cronoPoll = null; }
+  var box = document.getElementById("nl-crono-box");
+  if(box){ var c = box.closest(".card"); if(c){ c.remove(); } else { box.remove(); } }
+}
+function nlCronoAcabou(){
+  nlPararCrono();
+  nlPararVerificacao();
+  nlRemoverPix();
+  var pend = NL.pagPendente || nlLerPendente();
+  if(pend){ NL.cronoFimAvisado = String(pend.id); }
+  nlMsgLiss("Não identifiquei o seu pagamento e esse código PIX <b>expirou</b>.<br><br>Se você já pagou, é só me avisar que eu localizo o seu acesso.", function(){
+    nlChips([
+      { rotulo:"Já paguei e não recebi", acao:nlAcessoSocorro },
+      { rotulo:"Gerar novo PIX", acao:nlFormPix },
+      { rotulo:"Pagar com cartão", acao:nlFormCartao }
+    ]);
+  });
+}
+function nlIniciarCrono(){
+  var pend = NL.pagPendente || nlLerPendente();
+  if(!pend){ return; }
+  NL.cronoFim = pend.fim || ((pend.inicio || Date.now()) + CFG.pixMinutos * 60000);
+  if(NL.cronoFim <= Date.now()){ return; }
+  if(!document.getElementById("nl-crono-box")){ nlCard(nlCronoHtml()); }
+  nlPintarCrono();
+  if(NL.cronoTick){ clearInterval(NL.cronoTick); }
+  NL.cronoTick = setInterval(function(){
+    nlPintarCrono();
+    if(Date.now() >= NL.cronoFim){ nlCronoAcabou(); }
+  }, 1000);
+  nlAgendarVerificacao();
+}
+async function nlAcessoSocorro(){
+  if(nlTrancado("socorro")){ return; }
+  var pend = NL.pagPendente || nlLerPendente();
+  if(!pend){ nlMsgLiss("Não encontrei uma compra pendente por aqui.", function(){ nlChips([{ rotulo:"Ver os planos", acao:nlMostrarPlanos }]); }); return; }
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"acesso_socorro", payment_id: String(pend.id), email: NL.pgEmail || pend.email || "" });
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlAcessoSocorro); return; }
+    if(r && (r.achou === true || r.achou === "true")){
+      NL.entregueId = String(pend.id);
+      nlPararCrono();
+      nlRemoverPix();
+      nlLimparPendente();
+      var _para = r.enviado_para || NL.pgEmail || pend.email || "";
+      nlMsgLiss("Achei o seu acesso e acabei de enviar para <b>" + nlEscapar(_para) + "</b>.<br><br>Confira também a caixa de spam ou promoções.", function(){
+        nlEncerrarEm(1200);
+      });
+      return;
+    }
+    nlMsgLiss("Não consegui localizar o seu acesso por aqui.", function(){
+      nlChips([{ rotulo:"Solicitar ajuda", acao:nlChamadoPagamento }]);
+    });
+  }, 400);
+}
+function nlChamadoPagamento(){
+  if(nlTrancado("chpag")){ return; }
+  var pend = NL.pagPendente || nlLerPendente() || {};
+  var plano = pend.plano || {};
+  nlGarantirTicket();
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"chamado_abrir", nome: NL.pgNome || NL.nome || "", email: NL.pgEmail || pend.email || "", usuario: nlUsuarioConhecido(),
+      whatsapp: NL.pgZap || NL.chZap || "",
+      problema: "PAGOU E NAO RECEBEU - Plano: " + (plano.nome || "") + " - Valor: " + (plano.preco || "") + " - Pagamento: " + (pend.id || "") + " - Metodo: " + (NL.metodoPg || pend.metodo || "") });
+    nlEsperaDesligar();
+    if(!r || !(r.success === true || r.success === "true")){ nlInstabilidade(nlChamadoPagamento); return; }
+    nlMsgLiss("Um chamado prioritário foi aberto. Nossa equipe vai te responder por e-mail ou WhatsApp.<br><br>Agora é só aguardar.", function(){
+      nlEncerrarEm(1500);
+    });
+  }, 400);
+}
+async function nlVerificarPagamento(quieto){
+  if(!NL.pgAtivo){ return; }
+  var pend = NL.pagPendente || nlLerPendente();
+  if(!pend){ return; }
+  if(NL.verificando){ return; }
+  NL.verificando = true;
+  var s = null;
+  try{ s = await nlApi({ acao:"pagamento_status", payment_id: String(pend.id), email: NL.pgEmail || pend.email || "" }); }catch(e){ s = null; }
+  NL.verificando = false;
+  var atual = NL.pagPendente || nlLerPendente();
+  if(!atual || String(atual.id) !== String(pend.id)){ return; }
+  if(!s){
+    NL.pagFalhas = (NL.pagFalhas || 0) + 1;
+    if(NL.pgAtivo && NL.pagFalhas >= 2 && !NL.instAvisoPag){ NL.instAvisoPag = true; nlMsgLiss(NL_INSTAB, null); }
+    return;
+  }
+  NL.pagFalhas = 0;
+  NL.instAvisoPag = false;
+  var conta = s.account || {};
+  var usuario = s.username || conta.username || "";
+  var st = String(s.status || "").toLowerCase();
+  var cartao = (pend.metodo === "credit_card");
+  var aprovado = (st === "approved" || st === "paid" || st === "confirmed");
+  var entregue = (s.entregue === true || s.entregue === "true" || (s.entregue === undefined && usuario)) ? true : false;
+  if(aprovado && usuario && entregue){ nlPagamentoEntregue(pend, usuario); return; }
+  if(aprovado){
+    NL.pollRapido = Math.max(NL.pollRapido || 0, 10);
+    if(!NL.pgAtivo || NL.avisouPreparo === String(pend.id)){ return; }
+    NL.avisouPreparo = String(pend.id);
+    nlPararCrono();
+    nlRemoverPix();
+    nlMsgLiss("Pagamento confirmado! Estamos preparando o seu acesso, isso leva alguns segundos.", function(){
+      nlChips([{ rotulo:"Verificar de novo", acao:nlAcessoSocorro }]);
+    });
+    return;
+  }
+  if(cartao && (st === "rejected" || st === "declined" || st === "refused" || st === "cancelled")){
+    var _falavaC = NL.pgAtivo;
+    nlPararCrono();
+    nlLimparPendente();
+    if(!_falavaC){ return; }
+    nlMsgLiss("A operadora do cartão <b>recusou</b> o pagamento. Quer tentar de novo?", function(){
+      nlChips([
+        { rotulo:"Tentar novamente", acao:nlFormDadosCartao },
+        { rotulo:"Tentar outro cartão", acao:nlFormDadosCartao },
+        { rotulo:"Pagar com PIX", acao:nlFormPix }
+      ]);
+    });
+    return;
+  }
+  if(!cartao && (st === "expired" || st === "cancelled" || st === "rejected")){
+    var _falava = NL.pgAtivo;
+    nlPararCrono();
+    nlRemoverPix();
+    nlLimparPendente();
+    if(!_falava){ return; }
+    nlMsgLiss("Esse PIX expirou sem pagamento. Mas não tem problema — quer gerar um novo?", function(){
+      nlChips([
+        { rotulo:"Gerar novo PIX", acao:nlFormPix },
+        { rotulo:"Pagar com cartão", acao:nlFormCartao }
+      ]);
+    });
+    return;
+  }
+  if(st === "refunded" || st === "charged_back"){ nlPararCrono(); nlLimparPendente(); return; }
+  if(!cartao && Date.now() >= (pend.fim || 0) && NL.pgAtivo && NL.cronoFimAvisado !== String(pend.id)){
+    nlCronoAcabou();
+  }
+}
+function nlPagamentoEntregue(pend, usuario){
+  if(NL.entregueId === String(pend.id)){ return; }
+  NL.entregueId = String(pend.id);
+  var plano = pend.plano || { nome:"", preco:"" };
+  var email = NL.pgEmail || pend.email || "";
+  nlPararCrono();
+  nlRemoverPix();
+  nlLimparPendente();
+  nlLimparChips();
+  nlInertes("plano");
+  NL.vendaUser = usuario || NL.copiaUser || ""; NL.vendaPlano = plano.nome;
+  nlFichaGravar({ comprou: Date.now() });
+  nlApiFogo({ acao:"venda", plano: plano.nome, valor: plano.preco, valor_num: nlValorNum(plano.preco), usuario: NL.vendaUser, metodo: pend.metodo || NL.metodoPg || "pix", email: email, cpf: NL.pgCpf || "" });
+  var cred = "O acesso foi enviado para o e-mail <b>" + nlEscapar(email) + "</b>.<br><br>Confira também a caixa de spam ou promoções.";
+  nlMsgLiss("<b>Pagamento aprovado!</b> Seja bem-vindo(a) à família Netliss!", function(){
+    nlMsgLiss(cred, function(){
+      nlMsgLiss("Ah, e todo dia publicamos uma mensagem devocional dentro do aplicativo. Dá uma olhada e, se te fizer bem, compartilha com alguém que precise ler.", function(){
+        nlEncerrarEm(1500);
+      });
+    });
+  });
+}
+function nlFormCartao(){
+  if(NL.planoAtual === "VITALICIO"){ NL.vitalMetodo = "cartao"; }
+  nlCarregarSeguranca();
+  nlMsgLiss("Perfeito! Preencha os dados abaixo para pagar com <b>cartão de crédito</b>:<br><br><i>A exigência do CPF cumpre a Resolução BCB nº 1/2020 do Banco Central, para prevenir lavagem de dinheiro ou fraudes. O número do cartão você digita em ambiente protegido pelo Mercado Pago.</i><br><br><b>ATENÇÃO ao e-mail:</b> digite um e-mail real e correto, porque é para ele que enviamos o seu acesso e é por ele que você recupera as credenciais se precisar.", function(){
+    nlForm("<input id='nl-pg-nome' type='text' placeholder='Seu nome completo' maxlength='60'>" +
+           "<input id='nl-pg-email' type='email' placeholder='" + (NL.emailCliente ? "E-mail do cliente" : "Seu e-mail") + "' value='" + (NL.emailCliente || "") + "' maxlength='80'>" +
+           "<input id='nl-pg-cpf' type='tel' placeholder='Seu CPF (só números)' maxlength='11'>" +
+           "<button class='botao' onclick='nlValidarDadosCartao()'>Continuar para o pagamento</button>");
+    if(NL.nome && NL.nome.length >= 5){ document.getElementById("nl-pg-nome").value = NL.nome; }
+    nlRepreencherPagamento();
+  });
+}
+function nlValidarDadosCartao(){
+  var _cn = document.getElementById("nl-pg-nome");
+  var _ce = document.getElementById("nl-pg-email");
+  var _cc = document.getElementById("nl-pg-cpf");
+  if(!_cn || !_ce || !_cc){ return; }
+  var nome = _cn.value.trim();
+  var email = _ce.value.trim();
+  var cpf = nlSoNumeros(_cc.value);
+  if(nome.length < 5){ nlDestravar(); alert("Digite seu nome completo"); return; }
+  if(email.indexOf("@") < 1 || email.indexOf(".") < 3){ nlDestravar(); alert("Digite um e-mail válido"); return; }
+  if(cpf.length !== 11){ nlDestravar(); alert("O CPF precisa ter 11 números"); return; }
+  NL.pgNome = nome; NL.pgEmail = email; NL.pgCpf = cpf;
+  nlCpfGuardar(cpf);
+  nlMsgUser(nome);
+  nlConfirmarDados("nlConfirmouCartao", "nlFormCartao");
+}
+function nlConfirmouCartao(){
+  if(!NL.pgCpf){ NL.pgCpf = nlCpfLer(); }
+  if(!NL.pgCpf || !NL.pgEmail || !NL.pgNome){ nlFormCartao(); return; }
+  nlApiFogo({ acao:"nome", nome:NL.pgNome, email:NL.pgEmail });
+  nlFormDadosCartao();
+}
+function nlFormDadosCartao(){
+  nlCarregarSeguranca();
+  nlMsgLiss("Agora os dados do <b>cartão</b>. Eles são protegidos pelo Mercado Pago — a Netliss não vê nem guarda o número do seu cartão:", function(){
+    nlForm("<input id='nl-cc-num' type='tel' placeholder='Número do cartão' maxlength='19'>" +
+           "<input id='nl-cc-nome' type='text' placeholder='Nome impresso no cartão' maxlength='40'>" +
+           "<input id='nl-cc-val' type='tel' placeholder='Validade (MM/AA)' maxlength='5'>" +
+           "<input id='nl-cc-cvv' type='tel' placeholder='CVV (código de segurança)' maxlength='4'>" +
+           "<button class='botao' onclick='nlTokenizarEPagar()'>Pagar agora</button>");
+  });
+}
+function nlCarregarMp(cb){
+  if(window.MercadoPago){ cb(true); return; }
+  var s = document.createElement("script");
+  s.src = "https://sdk.mercadopago.com/js/v2";
+  s.onload = function(){ cb(true); };
+  s.onerror = function(){ cb(false); };
+  document.head.appendChild(s);
+}
+function nlCarregarSeguranca(){
+  if(document.getElementById("nl-mp-seg")){ return; }
+  var s = document.createElement("script");
+  s.id = "nl-mp-seg";
+  s.src = "https://www.mercadopago.com/v2/security.js";
+  s.setAttribute("view", "checkout");
+  s.onload = function(){ NL.mpDevice = window.MP_DEVICE_SESSION_ID || NL.mpDevice || ""; };
+  document.head.appendChild(s);
+}
+function nlDeviceId(){
+  return window.MP_DEVICE_SESSION_ID || NL.mpDevice || "";
+}
+function nlAcharChave(obj, chave, prof){
+  if(!obj || typeof obj !== "object" || prof > 6){ return null; }
+  if(obj[chave]){ return obj[chave]; }
+  for(var k in obj){
+    var achado = nlAcharChave(obj[k], chave, (prof || 0) + 1);
+    if(achado){ return achado; }
+  }
+  return null;
+}
+function nlTokenizarEPagar(){
+  if(nlTrancado("cobranca")){ return; }
+  var num = nlSoNumeros(document.getElementById("nl-cc-num").value);
+  var titular = document.getElementById("nl-cc-nome").value.trim();
+  var val = document.getElementById("nl-cc-val").value.trim();
+  var cvv = nlSoNumeros(document.getElementById("nl-cc-cvv").value);
+  if(num.length < 13){ nlDestravar(); alert("Confira o número do cartão"); return; }
+  if(titular.length < 5){ nlDestravar(); alert("Digite o nome impresso no cartão"); return; }
+  var partes = val.split("/");
+  if(partes.length !== 2 && val.length === 4){ partes = [val.substring(0,2), val.substring(2,4)]; }
+  if(partes.length !== 2 || partes[0].length !== 2){ nlDestravar(); alert("Validade no formato MM/AA"); return; }
+  if(cvv.length < 3){ nlDestravar(); alert("Confira o CVV"); return; }
+  if(!NL.pgCpf){ NL.pgCpf = nlCpfLer(); }
+  if(!NL.pgCpf || !NL.pgEmail || !NL.pgNome){ nlDestravar(); nlFormCartao(); return; }
+  var mes = partes[0];
+  var ano = partes[1].length === 2 ? "20" + partes[1] : partes[1];
+  nlCarregarSeguranca();
+  nlMsgUser("Cartão final " + num.substring(num.length - 4));
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var m = await nlApi({ acao:"metodos" });
+    nlEsperaDesligar();
+    var chave = m ? nlAcharChave(m, "mp_public_key", 0) : null;
+    if(!chave){ nlInstabilidade(nlFormDadosCartao); return; }
+    nlCarregarMp(function(carregou){
+      if(!carregou || !window.MercadoPago){
+        nlMsgLiss("O ambiente seguro do cartão não carregou (pode ser bloqueador de anúncios ou conexão). Quer tentar de novo ou ir de PIX?", function(){
+          nlChips([{ rotulo:"Tentar de novo", acao:nlFormDadosCartao }, { rotulo:"Pagar com PIX", acao:nlFormPix }]);
+        });
+        return;
+      }
+      try{
+        var mp = new MercadoPago(chave);
+        NL.mpChave = chave;
+        NL.mpBin = num.substring(0, 6);
+        NL.mpTitular = titular;
+        NL.mpMetodo = "";
+        var gerarToken = function(){
+          try{
+            mp.createCardToken({
+              cardNumber: num,
+              cardholderName: titular,
+              cardExpirationMonth: mes,
+              cardExpirationYear: ano,
+              securityCode: cvv,
+              identificationType: "CPF",
+              identificationNumber: NL.pgCpf
+            }).then(function(t){
+              if(t && t.id){ nlPagarCartao(t.id); }
+              else { nlErroCartao("não consegui validar os dados do cartão"); }
+            }).catch(function(){
+              nlErroCartao("os dados do cartão não passaram na validação — confere número, validade e CVV");
+            });
+          }catch(e4){ nlErroCartao("houve um erro ao proteger os dados do cartão"); }
+        };
+        var pm = null;
+        try{ pm = mp.getPaymentMethods({ bin: NL.mpBin }); }catch(e3){ pm = null; }
+        if(pm && typeof pm.then === "function"){
+          pm.then(function(bm){
+            try{ if(bm && bm.results && bm.results.length > 0){ NL.mpMetodo = bm.results[0].id; } }catch(e2){}
+            gerarToken();
+          }, function(){ gerarToken(); });
+        } else { gerarToken(); }
+      }catch(e){
+        nlErroCartao("houve um erro ao proteger os dados do cartão");
+      }
+    });
+  }, 300);
+}
+function nlErroCartao(motivo){
+  nlMsgLiss("Opa: " + motivo + ".<br>Vamos tentar de novo?", function(){
+    nlChips([
+      { rotulo:"Tentar novamente", acao:nlFormDadosCartao },
+      { rotulo:"Tentar outro cartão", acao:nlFormDadosCartao },
+      { rotulo:"Pagar com PIX", acao:nlFormPix }
+    ]);
+  });
+}
+function nlPagarCartao(tokenCartao){
+  nlDigitar(async function(){
+    var p = CFG.planos[NL.planoAtual];
+    if(!p){ nlMostrarPlanos(); return; }
+    if(NL.planoAtual === "VITALICIO"){ NL.vitalMetodo = "cartao"; }
+    var acaoPg = (NL.modoRenov && NL.contaRenov) ? "pagamento_renovar" : "pagamento_criar";
+    var corpo = { acao: acaoPg, metodo:"credit_card", card_token: tokenCartao, plan_id: nlPlanoId(p), nome: NL.pgNome, email: NL.pgEmail, cpf: NL.pgCpf,
+                  mp_payment_method_id: NL.mpMetodo || "", installments: nlParcelas(), cardholder_name: NL.mpTitular || NL.pgNome,
+                  mp_public_key_used: NL.mpChave || "", mp_device_session_id: nlDeviceId(), operadora: nlOpModCliente().operadora, modalidade: nlOpModCliente().modalidade };
+    if(NL.modoRenov && NL.contaRenov){ corpo.account_id = NL.contaRenov; corpo.usuario = NL.usuarioApp || ""; }
+    NL.metodoPg = "credit_card";
+    nlEsperaLigar();
+    var r = await nlApi(corpo);
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlFormDadosCartao); return; }
+    if(r && r.success && r.payment_id){
+      var stc = String(r.status || "").toLowerCase();
+      if(stc === "rejected" || stc === "cancelled"){
+        nlMsgLiss("A operadora do cartão <b>recusou</b> o pagamento. Quer tentar de novo?", function(){
+          nlChips([
+            { rotulo:"Tentar novamente", acao:nlFormDadosCartao },
+            { rotulo:"Tentar outro cartão", acao:nlFormDadosCartao },
+            { rotulo:"Pagar com PIX", acao:nlFormPix }
+          ]);
+        });
+        return;
+      }
+      nlMsgLiss("Pagamento do <b>" + p.nome + "</b> enviado! Estou aguardando a aprovação da operadora do cartão — costuma levar poucos segundos. Assim que aprovar, te entrego o acesso <b>aqui mesmo</b>.", function(){
+        nlIniciarPolling(r.payment_id, p, { metodo: "credit_card" });
+        if(stc === "approved"){
+          NL.avisouPreparo = String(r.payment_id);
+          nlMsgLiss("<b>Pagamento aprovado!</b> Estou liberando o seu acesso, isso leva alguns segundos.", null);
+        }
+      });
+    } else {
+      if(!r || !r.message){ nlInstabilidade(nlFormDadosCartao); return; }
+      nlErroCartao(nlEscapar(r.message));
+    }
+  }, 400);
+}
+
+// ---------------- JA SOU CLIENTE ----------------
+function nlAvisoCliente(tipo){
+  var d = NL.diasRestantes;
+  nlApiFogo({ acao:"aviso", tipo: tipo, usuario: NL.usuarioApp || "", dias: (typeof d === "number" && !isNaN(d)) ? Math.max(0, d) : "" });
+}
+function nlClienteRenovar(){ nlAvisoCliente("renovacao"); nlRenovarPlanos(); }
+function nlClienteSuporte(){ nlAvisoCliente("suporte"); nlSuporteAtivo(); }
+function nlClienteNaoAchou(){ nlAvisoCliente("nao_achou"); nlMostrarPlanos(); }
+function nlClienteEsqueci(){ nlAvisoCliente("recuperacao"); nlRecuperarAcesso(); }
+function nlFluxoCliente(){
+  nlAvisoInicio("cliente");
+}
+function nlPedirUsuario(){
+  nlMsgLiss("Que bom te ver de novo!<br><br>Me fala o seu <b>nome de usuário</b> (o mesmo que você usa no aplicativo):", function(){
+    nlForm("<input id='nl-usuario' type='text' placeholder='Seu nome de usuário' maxlength='40'>" +
+           "<button class='botao' onclick='nlVerificarUsuario()'>Verificar minha conta</button>" +
+           "<button class='botao sec' onclick='nlClienteEsqueci()'>Esqueci meu usuário</button>");
+  });
+}
+function nlVerificarUsuario(){
+  if(nlTrancado("conta")){ return; }
+  var u = document.getElementById("nl-usuario").value.trim();
+  if(u.length < 3){ nlDestravar(); alert("Digite seu nome de usuário"); return; }
+  nlMsgUser(u);
+  NL.usuarioApp = u;
+  nlBuscarConta(u);
+}
+function nlBuscarConta(u){
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"renovacao_busca", usuario:u });
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlFluxoCliente); return; }
+    var conta = null;
+    if(r && r.account){ conta = r.account; }
+    else if(r && r.data && r.data.account){ conta = r.data.account; }
+    else if(r && r.success && r.id){ conta = r; }
+    if(conta){
+      NL.contaRenov = conta.id || conta.account_id || null;
+      var dias = conta.days_remaining;
+      if((dias === undefined || dias === null || dias === "") && conta.expires_at){
+        var d1 = nlDataUtc(conta.expires_at);
+        if(d1){ dias = Math.ceil((d1.getTime() - Date.now()) / 86400000); }
+      }
+      if((conta.is_expired === true || conta.is_expired === "true") && !(dias <= 0)){ dias = 0; }
+      if(dias !== undefined && dias !== null && dias !== "" && !isNaN(dias)){ dias = Number(dias); NL.diasRestantes = dias; }
+      var info = "";
+      if(dias !== undefined && dias !== null && !isNaN(dias)){
+        info = (dias > 0)
+          ? "<br>Você ainda tem <b>" + dias + " dia(s)</b> de acesso — e renovando agora, os dias novos são <b>somados</b> a esses. Você não perde nada."
+          : "<br>Seu acesso está <b>vencido</b>, mas dá para renovar mantendo o <b>mesmo usuário e senha</b>.";
+      }
+      nlMsgLiss("Achei sua conta <b>" + nlEscapar(u) + "</b>!" + info + "<br><br>Como posso te ajudar hoje?", function(){
+        var opcoes = [
+          { rotulo:"Quero renovar", acao:nlClienteRenovar }
+        ];
+        if(dias !== undefined && dias !== null && !isNaN(dias) && dias > 0){
+          opcoes.push({ rotulo:"Suporte 24h", acao:nlClienteSuporte });
+        }
+        nlChips(opcoes);
+      });
+    } else {
+      nlMsgLiss("Hmm, não encontrei o usuário <b>" + nlEscapar(u) + "</b>. Pode ter sido erro de digitação — ou o acesso já venceu e foi removido do sistema.<br><br>O que você prefere?", function(){
+        nlChips([
+          { rotulo:"Tentar de novo", acao:nlFluxoCliente },
+          { rotulo:"Quero renovar", acao:nlClienteNaoAchou }
+        ]);
+      });
+    }
+  }, 400);
+}
+async function nlRenovarPlanos(){
+  NL.modoRenov = true;
+  await nlCarregarAvisos();
+  nlMsgLiss("Perfeito! Escolha o plano da sua renovação — caso o seu acesso ainda não tenha vencido, os dias contratados são somados ao que você já tem:", function(){
+    var total = NL.vitalicioLigado ? 4 : 3;
+    for(var i = 0; i < total; i++){
+      var k = NL_PLANOS[i];
+      var p = CFG.planos[k];
+      nlCard((k === "TRIMESTRAL" ? "<div class='tag'>MAIS VENDIDO</div>" : "") +
+        "<div class='titulo'>" + p.nome + "</div>" +
+        "<div class='preco'>" + p.preco + "</div>" +
+        "<div class='desc'>" + p.desc + "</div>" +
+        "<button class='botao' onclick='nlRenovarN(" + i + ")'>Renovar com este plano</button>",
+        { cls: (k === "TRIMESTRAL" ? "destaque" : ""), nl: "plano" });
+    }
+  });
+}
+function nlRenovarN(i){
+  var k = NL_PLANOS[i];
+  if(!k || !CFG.planos[k]){ return; }
+  var p = CFG.planos[k];
+  NL.planoAtual = k;
+  NL.modoRenov = true;
+  nlMsgUser("Renovar: " + p.nome);
+  if(k === "VITALICIO"){ nlVitalicio(); return; }
+  nlPerguntarMetodo();
+}
+
+// ---------------- LISS (Dify) ----------------
+function nlLiberarDigitacao(){
+  document.querySelector("#nl-moldura .nl-input").classList.add("ativa");
+  document.getElementById("nl-encerrar").style.display = "block";
+  setTimeout(function(){ document.getElementById("nl-texto").focus(); }, 350);
+}
+function nlBloquearDigitacao(){
+  document.querySelector("#nl-moldura .nl-input").classList.remove("ativa");
+  document.getElementById("nl-encerrar").style.display = "none";
+}
+function nlTravar(trava){
+  NL.aguardando = trava;
+  var campo = document.getElementById("nl-texto");
+  var botao = document.getElementById("nl-enviar");
+  campo.disabled = trava;
+  botao.disabled = trava;
+  botao.style.opacity = trava ? "0.4" : "1";
+  campo.placeholder = trava ? "Aguarde a resposta..." : "Digite sua mensagem";
+}
+function nlIrParaLiss(){
+  var _podeChamado = (NL.copiaUser || NL.usuarioApp || NL.vendaUser) ? true : false;
+  if(!_podeChamado){
+    nlMsgLiss("Para eu abrir um chamado com a nossa equipe, primeiro preciso que você faça o seu teste grátis — é rápido e não custa nada.", function(){
+      nlMsgLiss("Assim a nossa equipe já sabe exatamente como o aplicativo se comportou no seu celular e consegue te ajudar de verdade.", function(){
+        nlChips([
+          { rotulo:"Quero fazer o teste", acao:nlFluxoNovo },
+          { rotulo:"Já sou cliente", acao:nlFluxoCliente }
+        ]);
+      });
+    });
+    return;
+  }
+  nlGarantirTicket();
+  NL.modoChamado = "problema";
+  nlMsgLiss("Certo, me conte com detalhes o que está acontecendo, por favor...", function(){
+    nlLiberarDigitacao();
+  });
+}
+function nlChamadoRecebeuProblema(texto){
+  NL.chamadoProblema = texto;
+  NL.modoChamado = null;
+  nlBloquearDigitacao();
+  nlMsgLiss("Para te orientar melhor sobre isso, vou precisar abrir um chamado interno para a nossa equipe técnica.", function(){
+    nlMsgLiss("Por favor, me informe o seu e-mail e um número de WhatsApp para contato:", function(){
+      nlFormChamadoGeral();
+    });
+  });
+}
+function nlEnviarChamado(){
+  if(nlTrancado("chamado")){ return; }
+  var campoUser = document.getElementById("nl-ch-user");
+  var campoZap = document.getElementById("nl-ch-zap");
+  var em = document.getElementById("nl-ch-email").value.trim();
+  var zap = campoZap ? campoZap.value.replace(/[^0-9]/g, "") : "";
+  var usu = campoUser ? campoUser.value.trim() : nlUsuarioConhecido();
+  if(campoUser && usu.length < 3){ nlDestravar(); alert("Digite o seu nome de usuário do aplicativo"); return; }
+  if(em.indexOf("@") < 1 || em.indexOf(".") < 3){ nlDestravar(); alert("Digite um e-mail válido"); return; }
+  if(campoZap && zap.length < 10){ nlDestravar(); alert("Digite o WhatsApp com DDD"); return; }
+  NL.chUser = usu; NL.chEmail = em; NL.chZap = zap;
+  nlMsgUser((usu ? usu + " · " : "") + em + (zap ? " · " + zap : ""));
+  nlConfirmarDados("nlDispararChamado", campoZap ? "nlFormChamadoGeral" : "nlFormChamadoLimite");
+}
+function nlDispararChamado(){
+  if(nlTrancado("disparo")){ return; }
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var _fase = (NL.trilha === "novo") ? "teste" : "cliente";
+    var _fpc = await nlFpPronto(1500);
+    var r = await nlApi({ acao:"chamado_abrir", nome: NL.nome || "Cliente", email: NL.chEmail || "", whatsapp: NL.chZap || "", usuario: NL.chUser || nlUsuarioConhecido(), problema: NL.chamadoProblema || "", fase: _fase, fp: _fpc || "" });
+    nlEsperaDesligar();
+    if(!r || !(r.success === true || r.success === "true")){ nlInstabilidade(nlDispararChamado); return; }
+    NL.ultimoChamado = r.chamado || "";
+    if(_fase === "teste"){ nlFichaGravar({ testou: 0, testes: 0, limite: 0 }); NL.testesAparelho = 0; }
+    nlMsgLiss("Chamado aberto com sucesso, agora é só aguardar!", function(){
+      nlMsgLiss("Você vai receber a sua resposta por e-mail. Os nossos especialistas analisam os chamados de segunda a sexta, das 9h às 18h.", function(){
+        nlMsgLiss("Obrigada e Jesus te abençoe!", function(){
+          nlApiFogo({ acao:"ticket_fechar", ticket_id: NL.ticket });
+          nlEncerrarEm(1200);
+        });
+      });
+    });
+  }, 500);
+}
+
+function nlEnviarTexto(){
+  if(NL.aguardando){ return; }
+  var campo = document.getElementById("nl-texto");
+  var txt = campo.value.trim();
+  if(!txt){ return; }
+  campo.value = "";
+  nlLimparChips();
+  var db = document.createElement("div");
+  db.className = "msg user";
+  db.textContent = txt;
+  NL.corpo.appendChild(db);
+  nlRolar();
+  nlHistPush("cliente", nlEscapar(txt));
+  nlApiFogo({ acao:"msg", ticket_id: NL.ticket, autor:"cliente", mensagem: txt });
+  nlChamadoRecebeuProblema(txt);
+}
+function nlCopiarCred(qual, btn){
+  var v = qual === 0 ? NL.copiaUser : NL.copiaSenha;
+  if(!v){ return; }
+  var ok = function(){
+    if(btn){
+      btn.textContent = "Copiado!";
+      setTimeout(function(){ btn.textContent = qual === 0 ? "Copiar usuário" : "Copiar senha"; }, 1600);
+    }
+  };
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    navigator.clipboard.writeText(String(v)).then(ok, function(){ nlCopiarFallback(v); ok(); });
+  } else { nlCopiarFallback(v); ok(); }
+}
+function nlCopiarFallback(v){
+  var ta = document.createElement("textarea");
+  ta.value = String(v);
+  ta.style.position = "fixed"; ta.style.opacity = "0";
+  document.body.appendChild(ta);
+  ta.select();
+  try{ document.execCommand("copy"); }catch(e){}
+  ta.remove();
+}
+function nlDemoAnexo(){ nlSistema("envio de arquivos chega na próxima atualização"); }
+function nlAudio(){
+  var SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if(!SR){ nlSistema("O seu navegador parece não suportar áudio — digite sua mensagem"); return; }
+  if(NL.gravando && NL.rec){ try{ NL.rec.stop(); }catch(e){} return; }
+  var campo = document.getElementById("nl-texto");
+  NL.rec = new SR();
+  NL.rec.lang = "pt-BR";
+  NL.rec.interimResults = false;
+  NL.rec.maxAlternatives = 1;
+  NL.gravando = true;
+  nlSistema("Gravando... fale a sua mensagem e faça uma pausa para enviar");
+  NL.rec.onresult = function(ev){
+    var txt = "";
+    if(ev.results && ev.results[0] && ev.results[0][0]){ txt = ev.results[0][0].transcript; }
+    if(txt && campo){ campo.value = txt; nlEnviarTexto(); }
+  };
+  NL.rec.onend = function(){ NL.gravando = false; };
+  NL.rec.onerror = function(ev){
+    NL.gravando = false;
+    if(ev.error === "not-allowed"){ nlSistema("permita o uso do microfone para enviar áudio"); }
+    else { nlSistema("não consegui entender o áudio — tenta de novo ou digite"); }
+  };
+  try{ NL.rec.start(); }catch(e){ NL.gravando = false; }
+}
+
+function nlPedirEncerrar(){
+  if(NL.encerrado){ return; }
+  if(NL.pedindoEncerrar && NL.corpo.querySelector("[data-nl='encerrar']")){ return; }
+  NL.pedindoEncerrar = true;
+  NL.chipsAntesEncerrar = (NL.ultimosChips || []).slice();
+  nlMsgLiss("Quer mesmo encerrar o atendimento?", function(){
+    nlChips([
+      { rotulo:"Sim, encerrar", acao:nlEncerrar },
+      { rotulo:"Não, continuar", sec:true, manter:true, acao:nlNaoEncerrar }
+    ]);
+    var cx = NL.corpo.querySelectorAll(".chips");
+    if(cx.length){ cx[cx.length - 1].setAttribute("data-nl", "encerrar"); }
+    try{ nlEstadoSalvar(); }catch(e){}
+  });
+}
+function nlNaoEncerrar(){
+  NL.pedindoEncerrar = false;
+  var caixas = NL.corpo.querySelectorAll("[data-nl='encerrar']");
+  for(var c = 0; c < caixas.length; c++){ caixas[c].remove(); }
+  var d = document.createElement("div");
+  d.className = "msg user";
+  d.textContent = "Não, continuar";
+  NL.corpo.appendChild(d);
+  nlRegistrar("cliente", "Não, continuar");
+  nlHistPush("cliente", nlEscapar("Não, continuar"));
+  if(NL.chipsAntesEncerrar){ NL.ultimosChips = NL.chipsAntesEncerrar; }
+  var blocos = NL.corpo.querySelectorAll(".chips, .form");
+  for(var i = 0; i < blocos.length; i++){
+    var el = blocos[i];
+    var itens = el.querySelectorAll("button, input");
+    var algum = false;
+    for(var j = 0; j < itens.length; j++){
+      if(itens[j].tagName === "INPUT" || nlBotaoVivo(itens[j])){ algum = true; break; }
+    }
+    if(algum){ NL.corpo.appendChild(el); }
+  }
+  nlRolar();
+  try{ nlEstadoSalvar(); }catch(e){}
+  if(nlTemAcao()){ return; }
+  var e = { telaAtual: NL.telaAtual, telaArgs: NL.telaArgs, botoes: NL.ultimosChips };
+  if(nlRefazerTela(e)){ return; }
+  if(!nlRefazerBotoes(e)){ nlResgate(); }
+}
+function nlEncerrarEm(ms){
+  NL.fimAgendado = Date.now() + ms;
+  try{ nlEstadoSalvar(); }catch(e){}
+  setTimeout(function(){ if(NL.fimAgendado){ nlEncerrar(); } }, ms);
+}
+function nlEncerrar(){
+  NL.fimAgendado = 0;
+  NL.pedindoEncerrar = false;
+  NL.modoChamado = null;
+  NL.pgAtivo = false;
+  nlPararCrono();
+  nlPararVerificacao();
+  nlEnviarRegistro();
+  nlLimparChips();
+  nlBloquearDigitacao();
+  if(NL.pollTimer){ clearInterval(NL.pollTimer); }
+  if(NL.ticket){ nlApiFogo({ acao: "ticket_fechar", ticket_id: NL.ticket }); }
+  NL.ticket = null;
+  NL.difyConv = null;
+  try{ localStorage.removeItem("netliss_ticket"); }catch(e){}
+  NL.encerrado = true;
+  try{ nlEstadoSalvar(); }catch(e){}
+  nlMsgLiss("Foi um prazer te atender!<br>Se precisar de qualquer coisa, é só chamar. Jesus te abençoe!", function(){
+    nlChips([
+      { rotulo:"Novo atendimento", sec:true, acao:nlReiniciar }
+    ]);
+    var _e = document.getElementById("nl-encerrar"); if(_e){ _e.style.display = "none"; }
+  });
+}
+
+// ---------------- APARELHO ----------------
+function nlHash(str, seed){
+  var h1 = 3735928559 ^ seed, h2 = 1103547991 ^ seed;
+  for(var i = 0; i < str.length; i++){
+    var ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507);
+  h1 = h1 ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507);
+  h2 = h2 ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  var num = 4294967296 * (2097151 & h2) + (h1 >>> 0);
+  var txt = num.toString(16);
+  while(txt.length < 14){ txt = "0" + txt; }
+  return txt;
+}
+function nlFpMidia(){
+  var q = ["(any-hover: hover)","(hover: hover)","(any-pointer: fine)","(pointer: fine)","(pointer: coarse)","(color-gamut: p3)",
+           "(color-gamut: rec2020)","(dynamic-range: high)","(prefers-reduced-motion: reduce)","(forced-colors: active)",
+           "(inverted-colors: inverted)","(prefers-contrast: more)","(monochrome)","(prefers-color-scheme: dark)"];
+  var r = "";
+  for(var i = 0; i < q.length; i++){
+    try{ r += (window.matchMedia && window.matchMedia(q[i]).matches) ? "1" : "0"; }catch(e){ r += "x"; }
+  }
+  return r;
+}
+function nlFpWebgl(){
+  try{
+    var cv = document.createElement("canvas");
+    var gl = cv.getContext("webgl") || cv.getContext("experimental-webgl");
+    if(!gl){ return "sem"; }
+    var r = [];
+    var dbg = gl.getExtension("WEBGL_debug_renderer_info");
+    if(dbg){ r.push(gl.getParameter(dbg.UNMASKED_VENDOR_WEBGL)); r.push(gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL)); }
+    else { r.push(gl.getParameter(gl.VENDOR)); r.push(gl.getParameter(gl.RENDERER)); }
+    var ps = [gl.MAX_TEXTURE_SIZE, gl.MAX_RENDERBUFFER_SIZE, gl.MAX_VERTEX_ATTRIBS, gl.MAX_VERTEX_UNIFORM_VECTORS,
+              gl.MAX_FRAGMENT_UNIFORM_VECTORS, gl.MAX_VARYING_VECTORS, gl.MAX_TEXTURE_IMAGE_UNITS,
+              gl.MAX_COMBINED_TEXTURE_IMAGE_UNITS, gl.MAX_CUBE_MAP_TEXTURE_SIZE];
+    for(var i = 0; i < ps.length; i++){ r.push(gl.getParameter(ps[i])); }
+    var vp = gl.getParameter(gl.MAX_VIEWPORT_DIMS);
+    if(vp && vp.length > 1){ r.push(vp[0] + "x" + vp[1]); }
+    var perda = gl.getExtension("WEBGL_lose_context");
+    if(perda){ perda.loseContext(); }
+    return nlHash(r.join("|"), 7);
+  }catch(e){ return "erro"; }
+}
+var NL_FONTES = ["Arial","Arial Black","Calibri","Cambria","Candara","Consolas","Constantia","Corbel","Segoe UI","Tahoma",
+  "Trebuchet MS","Verdana","Georgia","Palatino Linotype","Century Gothic","Franklin Gothic Medium","Lucida Console",
+  "Lucida Sans Unicode","Helvetica Neue","Menlo","Monaco","Avenir","Futura","Gill Sans","Optima","DejaVu Sans",
+  "Liberation Sans","Droid Sans Mono","Noto Sans Mono","SamsungOne","SamsungOneUI","Samsung Sans","SECRobotoLight",
+  "MiSans","Mitype2018","OPPOSans","HarmonyOS Sans","vivo Sans","OnePlus Sans","Clock2017R"];
+function nlFpFontes(){
+  try{
+    var cv = document.createElement("canvas");
+    var x = cv.getContext("2d");
+    if(!x){ return "sem"; }
+    var amostra = "mmmmmmmmmmlli10OQwW";
+    var bases = ["monospace", "serif", "sans-serif"];
+    var larg = [];
+    for(var i = 0; i < bases.length; i++){ x.font = "72px " + bases[i]; larg.push(x.measureText(amostra).width); }
+    var tem = "";
+    for(var j = 0; j < NL_FONTES.length; j++){
+      var achou = "0";
+      for(var k = 0; k < bases.length; k++){
+        x.font = "72px '" + NL_FONTES[j] + "', " + bases[k];
+        if(x.measureText(amostra).width !== larg[k]){ achou = "1"; break; }
+      }
+      tem += achou;
+    }
+    return tem;
+  }catch(e){ return "erro"; }
+}
+function nlFpCanvas(){
+  try{
+    var cv = document.createElement("canvas");
+    cv.width = 280; cv.height = 60;
+    var x = cv.getContext("2d");
+    if(!x){ return "sem"; }
+    x.textBaseline = "top";
+    x.font = "16px Arial";
+    x.fillStyle = "#f60"; x.fillRect(120, 2, 70, 22);
+    x.fillStyle = "#069"; x.fillText("Netliss Wi-Fi 4G 2019 <ok> 1/3", 3, 4);
+    x.fillStyle = "rgba(102,204,0,0.7)"; x.font = "18px Georgia"; x.fillText("Netliss Wi-Fi 4G 2019 <ok> 1/3", 5, 28);
+    x.globalCompositeOperation = "multiply";
+    x.fillStyle = "rgb(255,0,255)"; x.beginPath(); x.arc(40, 30, 22, 0, Math.PI * 2, true); x.closePath(); x.fill();
+    x.fillStyle = "rgb(0,255,255)"; x.beginPath(); x.arc(70, 30, 22, 0, Math.PI * 2, true); x.closePath(); x.fill();
+    return nlHash(cv.toDataURL(), 11);
+  }catch(e){ return "erro"; }
+}
+function nlFpAudio(){
+  return new Promise(function(ok){
+    var feito = false;
+    var fim = function(v){ if(!feito){ feito = true; ok(v); } };
+    setTimeout(function(){ fim("tempo"); }, 1500);
+    try{
+      var OAC = window.OfflineAudioContext || window.webkitOfflineAudioContext;
+      if(!OAC){ fim("sem"); return; }
+      var ctx = new OAC(1, 5000, 44100);
+      var osc = ctx.createOscillator();
+      osc.type = "triangle";
+      osc.frequency.value = 10000;
+      var comp = ctx.createDynamicsCompressor();
+      comp.threshold.value = -50; comp.knee.value = 40; comp.ratio.value = 12; comp.attack.value = 0; comp.release.value = 0.25;
+      osc.connect(comp); comp.connect(ctx.destination); osc.start(0);
+      var pronto = function(buf){
+        try{
+          var d = buf.getChannelData(0), soma = 0;
+          for(var i = 4500; i < 5000; i++){ soma += Math.abs(d[i]); }
+          fim(String(Math.round(soma * 1000000)));
+        }catch(e){ fim("erro"); }
+      };
+      var pr = ctx.startRendering();
+      if(pr && typeof pr.then === "function"){ pr.then(pronto, function(){ fim("erro"); }); }
+      else { ctx.oncomplete = function(ev){ pronto(ev.renderedBuffer); }; }
+    }catch(e){ fim("erro"); }
+  });
+}
+function nlFpUa(){
+  var ua = String(navigator.userAgent || "");
+  var a = ua.indexOf("("), b = ua.indexOf(")");
+  var dentro = (a > -1 && b > a) ? ua.substring(a + 1, b) : ua.substring(0, 60);
+  var partes = dentro.split(";"), out = [];
+  for(var i = 0; i < partes.length; i++){
+    var p = partes[i].trim();
+    if(p.indexOf("rv:") === 0){ continue; }
+    out.push(p);
+  }
+  return out.join(";");
+}
+function nlFpUach(){
+  return new Promise(function(ok){
+    var feito = false;
+    var fim = function(v){ if(!feito){ feito = true; ok(v); } };
+    setTimeout(function(){ fim(null); }, 700);
+    try{
+      var ud = navigator.userAgentData;
+      if(!ud || !ud.getHighEntropyValues){ fim(null); return; }
+      ud.getHighEntropyValues(["model", "platformVersion", "fullVersionList"]).then(function(v){
+        var nav = "";
+        try{
+          var lista = v.fullVersionList || [];
+          for(var i = 0; i < lista.length && !nav; i++){
+            var br = String(lista[i].brand || "");
+            if(br.indexOf("Not") > -1 || br === "Chromium"){ continue; }
+            nav = br + " " + lista[i].version;
+          }
+          for(var j = 0; j < lista.length && !nav; j++){ if(String(lista[j].brand || "") === "Chromium"){ nav = "Chromium " + lista[j].version; } }
+        }catch(e){}
+        fim({ plataforma: v.platform || ud.platform || "", modelo: v.model || "", versao: v.platformVersion || "", movel: (v.mobile || ud.mobile) ? 1 : 0, navegador: nav });
+      }, function(){ fim(null); });
+    }catch(e){ fim(null); }
+  });
+}
+function nlFpNavegadorUa(){
+  var ua = String(navigator.userAgent || "");
+  var marcas = ["SamsungBrowser/", "Firefox/", "FxiOS/", "CriOS/", "EdgA/", "Edg/", "OPR/", "Version/", "Chrome/"];
+  for(var i = 0; i < marcas.length; i++){
+    var p = ua.indexOf(marcas[i]);
+    if(p > -1){ var resto = ua.substring(p); var f = resto.indexOf(" "); return f > -1 ? resto.substring(0, f) : resto; }
+  }
+  return "";
+}
+function nlFpBase(){
+  var nav = window.navigator || {}, scr = window.screen || {};
+  var w = scr.width || 0, h = scr.height || 0;
+  var tz = ""; try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || ""; }catch(e){}
+  var lg = ""; try{ lg = (nav.languages && nav.languages.length) ? Array.prototype.join.call(nav.languages, ",") : (nav.language || ""); }catch(e){}
+  return [
+    "sc=" + Math.min(w, h) + "x" + Math.max(w, h),
+    "dpr=" + Math.round((window.devicePixelRatio || 1) * 100) / 100,
+    "cd=" + (scr.colorDepth || ""),
+    "hc=" + (nav.hardwareConcurrency || ""),
+    "dm=" + (nav.deviceMemory || ""),
+    "tp=" + (nav.maxTouchPoints || 0),
+    "tz=" + tz,
+    "lg=" + String(lg).toLowerCase(),
+    "mq=" + nlFpMidia(),
+    "gl=" + nlFpWebgl(),
+    "ft=" + nlFpFontes()
+  ];
+}
+async function nlCalcularFp(){
+  var partes = nlFpBase();
+  var ch = await nlFpUach();
+  if(ch && ch.modelo){
+    partes.push("m=" + ch.modelo, "pv=" + ch.versao, "pf=" + ch.plataforma, "mb=" + ch.movel);
+  } else {
+    partes.push("ua=" + nlFpUa());
+    if(ch){ partes.push("pv=" + ch.versao, "pf=" + ch.plataforma); }
+    partes.push("cv=" + nlFpCanvas());
+    partes.push("au=" + (await nlFpAudio()));
+  }
+  partes.push("nv=" + ((ch && ch.navegador) ? ch.navegador : nlFpNavegadorUa()));
+  partes.push("pe=" + Math.floor(Date.now() / (CFG.fpDias * 86400000)));
+  var txt = partes.join(";");
+  return "f1" + nlHash(txt, 1) + nlHash(txt, 2);
+}
+function nlIniciarFp(){
+  if(NL.fpPromessa){ return NL.fpPromessa; }
+  try{
+    NL.fpPromessa = nlCalcularFp().then(function(v){ NL.fp = v; return v; }, function(){ NL.fp = ""; return ""; });
+  }catch(e){
+    NL.fpPromessa = Promise.resolve("");
+  }
+  return NL.fpPromessa;
+}
+function nlFpPronto(ms){
+  var pr = nlIniciarFp();
+  return Promise.race([pr, new Promise(function(ok){ setTimeout(function(){ ok(NL.fp || ""); }, ms); })]);
+}
+
+// ---------------- ORIGEM DO VISITANTE ----------------
+function nlLimparParam(v){
+  var x = String(v || ""), ok = "";
+  for(var i = 0; i < x.length && ok.length < 100; i++){
+    var c = x.charAt(i);
+    if((c >= "a" && c <= "z") || (c >= "A" && c <= "Z") || (c >= "0" && c <= "9") || c === "-" || c === "_" || c === "."){ ok += c; }
+  }
+  return ok;
+}
+function nlRastro(){
+  var params = new URLSearchParams(location.search);
+  var src = (params.get("utm_source") || "").toLowerCase();
+  var r = {
+    gclid: params.get("gclid") || "",
+    fbclid: params.get("fbclid") || "",
+    ttclid: params.get("ttclid") || "",
+    gptclid: params.get("gptclid") || params.get("gpt_id") || "",
+    ref: params.get("ref") || ""
+  };
+  if(!r.gptclid && (src.indexOf("chatgpt") > -1 || src.indexOf("openai") > -1 || src.indexOf("gpt") === 0)){
+    r.gptclid = params.get("utm_campaign") || params.get("utm_content") || src;
+  }
+  if(!r.fbclid && (src === "fb" || src === "ig" || src === "meta" || src.indexOf("facebook") > -1 || src.indexOf("instagram") > -1)){ r.fbclid = "utm-" + src; }
+  if(!r.ttclid && src.indexOf("tiktok") > -1){ r.ttclid = "utm-tiktok"; }
+  var refe = "", host = "", ua = "";
+  try{ refe = String(document.referrer || "").toLowerCase(); }catch(e){}
+  try{ host = String(location.hostname || "").toLowerCase(); }catch(e){}
+  try{ ua = String(navigator.userAgent || ""); }catch(e){}
+  if(refe && (!host || refe.indexOf(host) < 0)){
+    if(!r.gptclid && (refe.indexOf("chatgpt.com") > -1 || refe.indexOf("chat.openai.com") > -1)){ r.gptclid = "ref-chatgpt"; }
+    if(!r.fbclid && (refe.indexOf("facebook.com") > -1 || refe.indexOf("instagram.com") > -1 || refe.indexOf("threads.net") > -1)){ r.fbclid = "ref-meta"; }
+    if(!r.ttclid && refe.indexOf("tiktok.com") > -1){ r.ttclid = "ref-tiktok"; }
+  }
+  if(!r.fbclid && (ua.indexOf("Instagram") > -1 || ua.indexOf("FBAN") > -1 || ua.indexOf("FBAV") > -1 || ua.indexOf("FB_IAB") > -1)){ r.fbclid = "app-meta"; }
+  if(!r.ttclid && (ua.indexOf("musical_ly") > -1 || ua.indexOf("BytedanceWebview") > -1 || ua.indexOf("TikTok") > -1)){ r.ttclid = "app-tiktok"; }
+  r.origem = nlOrigemDetalhe(params, src, refe, host, ua, r);
+  r.campanha = params.get("utm_campaign") || params.get("campaign") || params.get("utm_content") || "";
+  for(var k in r){ if(Object.prototype.hasOwnProperty.call(r, k)){ r[k] = nlLimparParam(r[k]); } }
+  return r;
+}
+// v88: origem detalhada (rotulo legivel para a planilha)
+function nlOrigemDetalhe(params, src, refe, host, ua, r){
+  var med = (params.get("utm_medium") || "").toLowerCase();
+  var pago = (med.indexOf("cpc") > -1 || med.indexOf("paid") > -1 || med.indexOf("ads") > -1 || med.indexOf("pago") > -1);
+  var dom = "";
+  if(refe && (!host || refe.indexOf(host) < 0)){
+    var m = refe.match(/^[a-z]+:\/\/([^\/:?#]+)/);
+    dom = m ? m[1].replace(/^www\./, "").replace(/^m\./, "").replace(/^l\./, "").replace(/^lm\./, "") : "";
+  }
+  function tem(t){ return dom.indexOf(t) > -1; }
+  if(params.get("ref")) return "afiliado";
+  if(params.get("gclid") || params.get("gbraid") || params.get("wbraid")) return (src.indexOf("youtube") > -1 ? "youtube-ads" : "google-ads");
+  if(params.get("gptclid") || params.get("gpt_id")) return "chatgpt-ads";
+  if(params.get("fbclid") && pago) return "meta-ads";
+  if(params.get("ttclid")) return "tiktok-ads";
+  if(src){
+    var s2 = src.replace(/[^a-z0-9]/g, "");
+    if(s2 === "ig") s2 = "instagram";
+    if(s2 === "fb") s2 = "facebook";
+    if(s2 === "yt") s2 = "youtube";
+    if(s2 === "wa" || s2 === "zap") s2 = "whatsapp";
+    if(s2.indexOf("chatgpt") > -1 || s2.indexOf("openai") > -1) s2 = "chatgpt";
+    return s2.substring(0, 30) + (pago ? "-ads" : (med ? "-" + med.replace(/[^a-z0-9]/g, "").substring(0, 15) : ""));
+  }
+  if(dom){
+    if(tem("youtube.") || tem("youtu.be")) return "youtube";
+    if(tem("google.")) return "google-organico";
+    if(tem("instagram.")) return "instagram";
+    if(tem("facebook.") || tem("fb.")) return "facebook";
+    if(tem("threads.")) return "threads";
+    if(tem("whatsapp.") || tem("wa.me")) return "whatsapp";
+    if(tem("chatgpt.") || tem("openai.")) return "chatgpt";
+    if(tem("gemini.") || tem("bard.")) return "gemini";
+    if(tem("perplexity.")) return "perplexity";
+    if(tem("copilot.")) return "copilot";
+    if(tem("claude.ai")) return "claude";
+    if(tem("deepseek.")) return "deepseek";
+    if(tem("bing.")) return "bing";
+    if(tem("yahoo.")) return "yahoo";
+    if(tem("duckduckgo.")) return "duckduckgo";
+    if(tem("tiktok.")) return "tiktok";
+    if(tem("kwai.")) return "kwai";
+    if(tem("t.co") || tem("twitter.") || tem("x.com")) return "x-twitter";
+    if(tem("telegram.") || tem("t.me")) return "telegram";
+    return "site-" + dom.substring(0, 40);
+  }
+  if(ua.indexOf("Instagram") > -1) return "instagram-app";
+  if(ua.indexOf("FBAN") > -1 || ua.indexOf("FBAV") > -1 || ua.indexOf("FB_IAB") > -1) return "facebook-app";
+  if(ua.indexOf("musical_ly") > -1 || ua.indexOf("BytedanceWebview") > -1 || ua.indexOf("TikTok") > -1) return "tiktok-app";
+  if(ua.indexOf("WhatsApp") > -1) return "whatsapp";
+  if(params.get("fbclid")) return "meta-link";
+  return "direto";
+}
+
+// ================================================================
+//  PROGRAMA DE AFILIADOS (v85)
+//  Cadastro, entrada por codigo no e-mail, area do afiliado.
+//  Tudo conversa com o cenario "Netliss - Afiliados" (CFG.webhookAf).
+// ================================================================
+function nlAfP2(n){ n = Number(n || 0); return n < 10 ? "0" + n : String(n); }
+function nlAfEmailOk(e){
+  e = String(e || "").trim().toLowerCase();
+  var a = e.indexOf("@");
+  if(a < 1 || e.indexOf(" ") > -1 || e.lastIndexOf(".") < a + 2 || e.lastIndexOf(".") > e.length - 3){ return ""; }
+  return e;
+}
+function nlAfCadLer(){ return nlLer("netliss_afcad") || {}; }
+function nlAfCadGravar(dados){
+  var c = nlAfCadLer();
+  for(var k in dados){ if(dados.hasOwnProperty(k)){ c[k] = dados[k]; } }
+  nlSalvar("netliss_afcad", c, 3600000);
+  return c;
+}
+function nlAfSes(){ return nlLer("netliss_afses") || {}; }
+function nlAfSesGravar(email, sessao, dados){
+  nlSalvar("netliss_afses", { email: email, sessao: sessao, dados: dados || {} }, 7000000);
+}
+function nlAfSesDados(dados){
+  var s = nlAfSes();
+  if(!s.sessao){ return; }
+  s.dados = dados || s.dados;
+  nlSalvar("netliss_afses", s, 7000000);
+}
+function nlAfSesLimpar(){ try{ localStorage.removeItem("netliss_afses"); }catch(e){} }
+function nlAfMenuInicial(){
+  nlMsgLiss("Como posso te ajudar?", function(){
+    nlChips([
+      { rotulo:"Sou novo aqui", acao:nlFluxoNovo },
+      { rotulo:"Já sou cliente", acao:nlFluxoCliente },
+      { rotulo:"Ganhe dinheiro indicando a Netliss", acao:nlAfInicio, largo:true }
+    ]);
+  });
+}
+
+// ---------- A01 apresentacao ----------
+function nlAfInicio(){
+  nlMsgLiss("Indique a Netliss e ganhe <b>20%</b> do primeiro pagamento de cada cliente que contratar pelo seu link ou QR code.<br><br>O Pix cai na sua conta no dia seguinte à venda.", function(){
+    nlChips([
+      { rotulo:"Quero ser afiliado", acao:nlAfRegras },
+      { rotulo:"Já sou afiliado", acao:nlAfEntrar }
+    ]);
+  });
+}
+
+// ---------- A02 regras ----------
+function nlAfRegras(){
+  nlMsgLiss("Antes do cadastro, as regras do programa:<br><br>" +
+    "<b>01.</b> A comissão é de 20% sobre o primeiro pagamento de cada CPF. Renovação não gera comissão.<br><br>" +
+    "<b>02.</b> A indicação fica registrada no celular e no navegador onde a pessoa abriu o seu link.<br><br>" +
+    "<b>03.</b> Se um pagamento for estornado, o valor é descontado das suas próximas comissões.", function(){
+    nlMsgLiss("<b>04.</b> Tentar fazer cliente antigo passar por novo leva à desclassificação do programa.<br><br>" +
+      "<b>05.</b> Ao excluir o cadastro, você perde as comissões pendentes e futuras.<br><br>" +
+      "<b>06.</b> Não há vínculo empregatício. A Netliss pode encerrar o programa a qualquer momento, com aviso prévio e pagamento das comissões já geradas.", function(){
+      nlChips([
+        { rotulo:"Li e aceito as regras", acao:nlAfAceitar }
+      ]);
+    });
+  });
+}
+function nlAfAceitar(){
+  nlAfCadGravar({ aceite: "1" });
+  nlAfPedirEmail();
+}
+
+// ---------- A03 cadastro, uma pergunta por vez ----------
+function nlAfPedirEmail(){
+  nlMsgLiss("Ótimo! Qual é o seu <b>e-mail</b>?<br><br><i>Atenção: o e-mail do cadastro não poderá ser alterado depois.</i>", function(){
+    nlForm("<input id='nl-af-email' type='email' placeholder='seuemail@exemplo.com' maxlength='80'>" +
+           "<button class='botao' onclick='nlAfSalvarEmail()'>Continuar</button>");
+  });
+}
+function nlAfSalvarEmail(){
+  if(nlTrancado("afemail")){ return; }
+  var campo = document.getElementById("nl-af-email");
+  var e = nlAfEmailOk(campo ? campo.value : "");
+  if(!e){ nlDestravar(); alert("Digite um e-mail válido"); return; }
+  nlMsgUser(e);
+  nlAfCadGravar({ email: e });
+  nlAfPedirZap();
+}
+function nlAfPedirZap(){
+  nlMsgLiss("Agora o seu <b>WhatsApp</b>, para contato quando for preciso:", function(){
+    nlForm(nlTelHtml("nl-af-tel", "WhatsApp para contato") +
+           "<button class='botao' onclick='nlAfSalvarZap()'>Continuar</button>");
+  });
+}
+function nlAfSalvarZap(){
+  if(nlTrancado("afzap")){ return; }
+  var t = nlTelLer("nl-af-tel");
+  if(!t){ nlDestravar(); alert("Digite o DDD e o número do WhatsApp"); return; }
+  nlMsgUser(t);
+  nlAfCadGravar({ zap: t });
+  nlAfPedirTitular();
+}
+function nlAfPedirTitular(){
+  nlMsgLiss("Qual é o <b>nome completo do titular</b> da conta que vai receber os pagamentos?", function(){
+    nlForm("<input id='nl-af-titular' type='text' placeholder='Nome completo do titular' maxlength='80'>" +
+           "<button class='botao' onclick='nlAfSalvarTitular()'>Continuar</button>");
+  });
+}
+function nlAfSalvarTitular(){
+  if(nlTrancado("aftitular")){ return; }
+  var campo = document.getElementById("nl-af-titular");
+  var t = campo ? campo.value.trim() : "";
+  if(t.length < 5 || t.indexOf(" ") < 1){ nlDestravar(); alert("Digite o nome completo do titular"); return; }
+  nlMsgUser(t);
+  nlAfCadGravar({ titular: t });
+  nlAfPedirPix();
+}
+function nlAfPedirPix(){
+  nlMsgLiss("E qual é a sua <b>chave Pix</b>? Pode ser CPF, celular, e-mail ou chave aleatória.", function(){
+    nlForm("<input id='nl-af-pix' type='text' placeholder='Sua chave Pix' maxlength='120'>" +
+           "<button class='botao' onclick='nlAfSalvarPix()'>Continuar</button>");
+  });
+}
+function nlAfSalvarPix(){
+  if(nlTrancado("afpix")){ return; }
+  var campo = document.getElementById("nl-af-pix");
+  var p = campo ? campo.value.trim() : "";
+  if(p.length < 4){ nlDestravar(); alert("Digite a sua chave Pix"); return; }
+  nlMsgUser(p);
+  nlAfCadGravar({ pix: p });
+  nlAfConferir();
+}
+function nlAfConferir(){
+  var c = nlAfCadLer();
+  nlMsgLiss("Confere os seus dados:<br><br>" +
+    "<b>E-mail:</b> " + nlEscapar(c.email || "") + "<br>" +
+    "<b>WhatsApp:</b> " + nlEscapar(c.zap || "") + "<br>" +
+    "<b>Titular:</b> " + nlEscapar(c.titular || "") + "<br>" +
+    "<b>Chave Pix:</b> " + nlEscapar(c.pix || ""), function(){
+    nlChips([
+      { rotulo:"Confirmar", acao:nlAfEnviarCadastro },
+      { rotulo:"Corrigir", acao:nlAfPedirEmail, sec:true }
+    ]);
+  });
+}
+function nlAfEnviarCadastro(){
+  var c = nlAfCadLer();
+  if(!c.email || !c.zap || !c.titular || !c.pix){ nlAfPedirEmail(); return; }
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"af_cadastrar", email:c.email, whatsapp:c.zap, titular:c.titular, pix:c.pix, aceite:c.aceite || "1" });
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlAfEnviarCadastro); return; }
+    if(r.ok){
+      try{ localStorage.removeItem("netliss_afcad"); }catch(e){}
+      nlMsgLiss("Pronto, <b>" + nlEscapar(String(c.titular).split(" ")[0]) + "</b>! Seu cadastro de afiliado foi concluído. 🎉<br><br>Aqui estão o seu link e o seu QR code. Copie e guarde em um lugar seguro: também enviamos tudo para o seu e-mail.", function(){
+        nlAfCardLinkQr(r.link, r.qr, r.ref);
+        nlMsgLiss("Agora é só divulgar onde você quiser. Cada cliente novo que contratar pelo seu link gera a sua comissão.", function(){
+        });
+      });
+      return;
+    }
+    if(r.existe === "ativo"){
+      nlMsgLiss("Esse e-mail já está cadastrado como afiliado.", function(){
+        nlChips([
+          { rotulo:"Entrar como afiliado", acao:nlAfEntrarCadastrado },
+          { rotulo:"Usar outro e-mail", acao:nlAfPedirEmail, sec:true }
+        ]);
+      });
+      return;
+    }
+    if(r.existe === "desativado"){
+      nlMsgLiss("Esse cadastro de afiliado está desativado, deseja reativar novamente?", function(){
+        nlChips([
+          { rotulo:"Sim, reativar", acao:nlAfEntrarCadastrado },
+          { rotulo:"Não", acao:nlAfMenuInicial, sec:true }
+        ]);
+      });
+      return;
+    }
+    nlMsgLiss("Algum dado ficou inválido. Vamos conferir de novo, começando pelo e-mail.", function(){ nlAfPedirEmail(); });
+  });
+}
+function nlAfEntrarCadastrado(){
+  var c = nlAfCadLer();
+  if(c.email){ nlAfPedirCodigo(c.email); return; }
+  nlAfEntrar();
+}
+
+// ---------- link e QR code ----------
+function nlAfCardLinkQr(link, qr, ref){
+  var l = nlEscapar(link || ""), q = nlEscapar(qr || "");
+  nlCard("<div class='titulo'>Seu link de afiliado</div>" +
+    "<div class='pix-codigo' style='font-size:12.5px;color:var(--texto)'>" + l + "</div>" +
+    "<button class='botao' data-vivo='1' data-v='" + l + "' onclick='nlAfCopiar(this)'>Copiar link</button>" +
+    "<div class='titulo' style='margin-top:16px'>Seu QR code</div>" +
+    "<div style='background:#fff;border-radius:12px;padding:10px;margin:8px 0 11px;text-align:center'>" +
+    "<img src='" + q + "' alt='QR code' style='width:100%;max-width:220px;height:auto;display:block;margin:0 auto'></div>" +
+    "<button class='botao' data-vivo='1' data-v='" + q + "' data-n='qrcode-netliss-" + nlEscapar(ref || "") + ".png' onclick='nlAfBaixarQr(this)'>Baixar QR code</button>",
+    { nl: "aflink" });
+}
+function nlAfCopiar(b){
+  var v = b ? b.getAttribute("data-v") : "";
+  if(!v){ return; }
+  nlCopiarTexto(v);
+  nlAvisinho("Link copiado!");
+}
+async function nlAfBaixarQr(b){
+  var url = b ? b.getAttribute("data-v") : "";
+  var nome = (b && b.getAttribute("data-n")) || "qrcode-netliss.png";
+  if(!url){ return; }
+  try{
+    var r = await fetch(url);
+    var blob = await r.blob();
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = nome;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(function(){ try{ URL.revokeObjectURL(a.href); a.remove(); }catch(e){} }, 1500);
+    nlAvisinho("QR code baixado!");
+  }catch(e){
+    window.open(url, "_blank");
+  }
+}
+
+// ---------- A05 entrada por codigo ----------
+function nlAfEntrar(){
+  var s = nlAfSes();
+  if(s.sessao && s.dados && s.dados.ref){ nlAfArea(); return; }
+  nlMsgLiss("Me fala o <b>e-mail</b> do seu cadastro de afiliado. Vou te enviar um código de acesso.", function(){
+    nlForm("<input id='nl-af-login' type='email' placeholder='seuemail@exemplo.com' maxlength='80'>" +
+           "<button class='botao' onclick='nlAfSalvarLogin()'>Enviar código</button>");
+  });
+}
+function nlAfSalvarLogin(){
+  if(nlTrancado("aflogin")){ return; }
+  var campo = document.getElementById("nl-af-login");
+  var e = nlAfEmailOk(campo ? campo.value : "");
+  if(!e){ nlDestravar(); alert("Digite um e-mail válido"); return; }
+  nlMsgUser(e);
+  nlAfPedirCodigo(e);
+}
+function nlAfPedirCodigo(email){
+  nlAfCadGravar({ email: email });
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"af_codigo", email:email });
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlAfEntrar); return; }
+    if(r.ok || r.motivo === "espere"){
+      var txt = r.ok
+        ? "Enviei um código de <b>06 caracteres</b> para <b>" + nlEscapar(email) + "</b>. Confira também a caixa de spam.<br><br>O código vale por 10 minutos."
+        : "Acabei de enviar um código para <b>" + nlEscapar(email) + "</b>. Confira a caixa de entrada e o spam.";
+      nlMsgLiss(txt, function(){ nlAfFormCodigo(); });
+      return;
+    }
+    if(r.existe === false){
+      nlMsgLiss("Não encontrei nenhum afiliado com esse e-mail.", function(){
+        nlChips([
+          { rotulo:"Quero ser afiliado", acao:nlAfRegras },
+          { rotulo:"Tentar outro e-mail", acao:nlAfEntrar, sec:true }
+        ]);
+      });
+      return;
+    }
+    nlInstabilidade(nlAfEntrar);
+  });
+}
+function nlAfFormCodigo(){
+  nlForm("<input id='nl-af-codigo' type='text' placeholder='Código de 06 caracteres' maxlength='6' autocomplete='one-time-code' style='text-transform:uppercase;letter-spacing:4px;text-align:center'>" +
+         "<button class='botao' onclick='nlAfSalvarCodigo()'>Entrar</button>" +
+         "<button class='botao sec' onclick='nlAfReenviar()'>Reenviar código</button>");
+}
+function nlAfReenviar(){
+  var c = nlAfCadLer();
+  if(!c.email){ nlAfEntrar(); return; }
+  nlMsgUser("Reenviar código");
+  nlAfPedirCodigo(c.email);
+}
+function nlAfSalvarCodigo(){
+  if(nlTrancado("afcodigo")){ return; }
+  var campo = document.getElementById("nl-af-codigo");
+  var cod = campo ? campo.value.trim().toUpperCase() : "";
+  if(cod.length !== 6){ nlDestravar(); alert("Digite o código de 06 caracteres"); return; }
+  var c = nlAfCadLer();
+  if(!c.email){ nlAfEntrar(); return; }
+  nlMsgUser(cod);
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"af_entrar", email:c.email, codigo:cod });
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlAfFormCodigo); return; }
+    if(r.ok){
+      nlAfSesGravar(c.email, r.sessao, r.dados);
+      if(r.dados && r.dados.status === "desativado"){
+        nlMsgLiss("Esse cadastro de afiliado está desativado, deseja reativar novamente?", function(){
+          nlChips([
+            { rotulo:"Sim, reativar", acao:nlAfReativar },
+            { rotulo:"Não", acao:nlAfSair, sec:true }
+          ]);
+        });
+        return;
+      }
+      nlAfArea();
+      return;
+    }
+    if(r.motivo === "errado"){
+      nlMsgLiss("Código incorreto. Você ainda tem <b>" + nlAfP2(r.restam) + "</b> " + (r.restam === 1 ? "tentativa" : "tentativas") + ".", function(){ nlAfFormCodigo(); });
+      return;
+    }
+    var msg = (r.motivo === "bloqueado") ? "Você errou o código 03 vezes. Por segurança, peça um código novo." : "Esse código expirou. Peça um código novo.";
+    nlMsgLiss(msg, function(){
+      nlChips([
+        { rotulo:"Pedir código novo", acao:nlAfReenviarChip }
+      ]);
+    });
+  });
+}
+function nlAfReenviarChip(){
+  var c = nlAfCadLer();
+  if(!c.email){ nlAfEntrar(); return; }
+  nlAfPedirCodigo(c.email);
+}
+
+// ---------- A06 area do afiliado ----------
+function nlAfArea(){
+  var s = nlAfSes();
+  if(!s.sessao){ nlAfSessaoVencida(); return; }
+  var d = s.dados || {};
+  nlMsgLiss("<b>Sua área de afiliado</b><br><br>" +
+    "<b>Titular:</b> " + nlEscapar(d.titular || "") + "<br>" +
+    "<b>WhatsApp:</b> " + nlEscapar(d.whatsapp || "") + "<br>" +
+    "<b>Chave Pix:</b> " + nlEscapar(d.pix || "") + "<br>" +
+    "<b>E-mail:</b> " + nlEscapar(d.email || s.email || "") + "<br>" +
+    "<b>Código:</b> " + nlEscapar(d.ref || ""), function(){
+    nlChips([
+      { rotulo:"Meu link e QR code", acao:nlAfLinkQr },
+      { rotulo:"Meus resultados", acao:nlAfResultados },
+      { rotulo:"Editar WhatsApp", acao:nlAfEditarZap },
+      { rotulo:"Editar chave Pix", acao:nlAfEditarPix },
+      { rotulo:"Excluir cadastro", acao:nlAfExcluir, sec:true },
+      { rotulo:"Sair", acao:nlAfSair, sec:true }
+    ]);
+  });
+}
+function nlAfSessaoVencida(){
+  nlAfSesLimpar();
+  nlMsgLiss("Por segurança, o seu acesso de afiliado expirou. Entre de novo com o seu e-mail.", function(){ nlAfEntrar(); });
+}
+function nlAfVoltarArea(){ nlAfArea(); }
+function nlAfLinkQr(){
+  var s = nlAfSes();
+  if(!s.sessao){ nlAfSessaoVencida(); return; }
+  var d = s.dados || {};
+  nlMsgLiss("Aqui estão o seu link e o seu QR code:", function(){
+    nlAfCardLinkQr(d.link, d.qr, d.ref);
+    nlChips([{ rotulo:"Voltar à minha área", acao:nlAfVoltarArea, sec:true }]);
+  });
+}
+function nlAfResultados(){
+  var s = nlAfSes();
+  if(!s.sessao){ nlAfSessaoVencida(); return; }
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"af_resultados", email:s.email, sessao:s.sessao });
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlAfResultados); return; }
+    if(!r.ok){ nlAfSessaoVencida(); return; }
+    nlMsgLiss("<b>Seus resultados</b><br><br>" +
+      "<b>Vendas que geraram comissão:</b> " + nlAfP2(r.vendas) + "<br>" +
+      "<b>Comissões geradas:</b> " + nlEscapar(r.ganhos) + "<br>" +
+      "<b>Já recebido:</b> " + nlEscapar(r.pago) + "<br>" +
+      "<b>A receber:</b> " + nlEscapar(r.receber) + "<br><br>" +
+      "<i>As vendas de hoje aparecem aqui amanhã, depois das 10h30.</i>", function(){
+      nlChips([{ rotulo:"Voltar à minha área", acao:nlAfVoltarArea, sec:true }]);
+    });
+  });
+}
+function nlAfEditarZap(){
+  nlMsgLiss("Qual é o seu <b>novo WhatsApp</b>?", function(){
+    nlForm(nlTelHtml("nl-af-tel2", "Novo WhatsApp") +
+           "<button class='botao' onclick='nlAfSalvarZapNovo()'>Salvar</button>" +
+           "<button class='botao sec' onclick='nlAfVoltarArea()'>Cancelar</button>");
+  });
+}
+function nlAfSalvarZapNovo(){
+  if(nlTrancado("afzap2")){ return; }
+  var t = nlTelLer("nl-af-tel2");
+  if(!t){ nlDestravar(); alert("Digite o DDD e o número do WhatsApp"); return; }
+  nlMsgUser(t);
+  nlAfMandarEdicao({ campo:"whatsapp", whatsapp:t });
+}
+function nlAfEditarPix(){
+  nlMsgLiss("Informe a <b>nova chave Pix</b> e o <b>nome completo do titular</b> da conta:", function(){
+    nlForm("<input id='nl-af-pix2' type='text' placeholder='Nova chave Pix' maxlength='120'>" +
+           "<input id='nl-af-tit2' type='text' placeholder='Nome completo do titular' maxlength='80'>" +
+           "<button class='botao' onclick='nlAfSalvarPixNovo()'>Salvar</button>" +
+           "<button class='botao sec' onclick='nlAfVoltarArea()'>Cancelar</button>");
+  });
+}
+function nlAfSalvarPixNovo(){
+  if(nlTrancado("afpix2")){ return; }
+  var p = (document.getElementById("nl-af-pix2") || {}).value || "";
+  var t = (document.getElementById("nl-af-tit2") || {}).value || "";
+  p = p.trim(); t = t.trim();
+  if(p.length < 4){ nlDestravar(); alert("Digite a nova chave Pix"); return; }
+  if(t.length < 5 || t.indexOf(" ") < 1){ nlDestravar(); alert("Digite o nome completo do titular"); return; }
+  nlMsgUser(p + " (" + t + ")");
+  nlAfMandarEdicao({ campo:"pix", pix:p, titular:t });
+}
+function nlAfMandarEdicao(dados){
+  var s = nlAfSes();
+  if(!s.sessao){ nlAfSessaoVencida(); return; }
+  dados.acao = "af_editar"; dados.email = s.email; dados.sessao = s.sessao;
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi(dados);
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlAfVoltarArea); return; }
+    if(r.ok){
+      nlAfSesDados(r.dados);
+      nlMsgLiss("Pronto, dados atualizados!", function(){ nlAfArea(); });
+      return;
+    }
+    if(r.motivo === "sessao"){ nlAfSessaoVencida(); return; }
+    nlMsgLiss("Não consegui salvar: confira os dados e tente de novo.", function(){ nlAfArea(); });
+  });
+}
+function nlAfExcluir(){
+  nlMsgLiss("Ao excluir, você perde as comissões pendentes e futuras e o seu link deixa de gerar comissão. Deseja continuar?", function(){
+    nlChips([
+      { rotulo:"Sim, excluir", acao:nlAfExcluirConfirma },
+      { rotulo:"Cancelar", acao:nlAfVoltarArea, sec:true }
+    ]);
+  });
+}
+function nlAfExcluirConfirma(){
+  var s = nlAfSes();
+  if(!s.sessao){ nlAfSessaoVencida(); return; }
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"af_excluir", email:s.email, sessao:s.sessao });
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlAfExcluir); return; }
+    if(!r.ok){ nlAfSessaoVencida(); return; }
+    nlAfSesLimpar();
+    nlMsgLiss("Seu cadastro de afiliado foi desativado.<br><br>Se um dia quiser voltar, é só entrar com o mesmo e-mail em <b>Já sou afiliado</b>.", function(){
+      
+    });
+  });
+}
+function nlAfReativar(){
+  var s = nlAfSes();
+  if(!s.sessao){ nlAfSessaoVencida(); return; }
+  nlDigitar(async function(){
+    nlEsperaLigar();
+    var r = await nlApi({ acao:"af_reativar", email:s.email, sessao:s.sessao });
+    nlEsperaDesligar();
+    if(!r){ nlInstabilidade(nlAfReativar); return; }
+    if(!r.ok){ nlAfSessaoVencida(); return; }
+    nlAfSesDados(r.dados);
+    nlMsgLiss("Cadastro reativado! Bem-vindo(a) de volta. 🎉", function(){ nlAfArea(); });
+  });
+}
+function nlAfSair(){
+  nlAfSesLimpar();
+  nlMsgLiss("Você saiu da sua área de afiliado.", function(){
+    
+  });
+}
+
+// ---------------- INICIALIZACAO ----------------
+function nlBootWidget(){
+  nlLimpezaInicial();
+  NL.corpo = document.getElementById("nl-corpo");
+  nlVigiarCliques();
+  NL.corpo.addEventListener("scroll", nlChecarDesce);
+  setInterval(nlChecarDesce, 1200);
+  NL.clientId = nlGerarId();
+  var rodape = document.getElementById("nl-id-visual");
+  if(rodape){ rodape.textContent = NL.clientId; }
+
+  nlHistRestaurar();
+
+  var _r = nlRastro();
+  var _temRastro = (_r.gclid || _r.fbclid || _r.ttclid || _r.gptclid || _r.ref) ? true : false;
+  if(!nlLer("netliss_visitou")){
+    nlSalvar("netliss_visitou", true, CFG.ttlId);
+    nlApiFogo({ acao: "visita", gclid:_r.gclid, fbclid:_r.fbclid, ttclid:_r.ttclid, gptclid:_r.gptclid, ref:_r.ref, origem:_r.origem, campanha:_r.campanha });
+  } else if(_temRastro){
+    nlApiFogo({ acao: "retorno", gclid:_r.gclid, fbclid:_r.fbclid, ttclid:_r.ttclid, gptclid:_r.gptclid, ref:_r.ref, origem:_r.origem, campanha:_r.campanha });
+  } else {
+    nlApiFogo({ acao: "retorno", origem:_r.origem });
+  }
+  setTimeout(function(){ try{ nlIniciarFp(); }catch(e){} }, 1500);
+
+  document.getElementById("nl-texto").addEventListener("keydown", function(ev){
+    if(ev.key === "Enter"){ nlEnviarTexto(); }
+  });
+
+  var hora = new Date().getHours();
+  var periodo = "Boa noite";
+  if(hora >= 5 && hora < 12){ periodo = "Bom dia"; }
+  else if(hora >= 12 && hora < 18){ periodo = "Boa tarde"; }
+  var saudacoes = [ periodo + "! Posso te ajudar?", periodo + "! Precisa de ajuda?", periodo + "! Alguma dúvida?" ];
+  document.getElementById("nl-teaser-txt").innerHTML = saudacoes[Math.floor(Math.random()*saudacoes.length)];
+
+  var _porLink = document.querySelectorAll("a[href*='abrir-chat'], a[href*='abrirchat'], [data-netliss]");
+  for(var _k = 0; _k < _porLink.length; _k++){
+    _porLink[_k].addEventListener("click", function(ev){ ev.preventDefault(); ev.stopPropagation(); nlAbrirChat("botao_site"); }, true);
+  }
+  var _frases = ["teste gratis","teste grátis","atendimento ao cliente","falar com especialistas","escolher este plano","fale com a gente","quero contratar"];
+  var _liga = document.querySelectorAll("a, button, div[role='button'], .botao, .btn");
+  for(var _i = 0; _i < _liga.length; _i++){
+    (function(el){
+      if(el.closest && el.closest("#nl-moldura")){ return; }
+      var t = (el.textContent || "").trim().toLowerCase();
+      if(!t || t.length > 60){ return; }
+      for(var _j = 0; _j < _frases.length; _j++){
+        if(t.indexOf(_frases[_j]) > -1){
+          el.addEventListener("click", function(ev){ ev.preventDefault(); ev.stopPropagation(); nlAbrirChat("botao_site"); }, true);
+          break;
+        }
+      }
+    })(_liga[_i]);
+  }
+
+  window.addEventListener("pagehide", function(){ try{ nlEnviarRegistro(); }catch(e){} });
+  window.addEventListener("beforeunload", function(){ try{ nlEnviarRegistro(); }catch(e){} });
+  document.addEventListener("visibilitychange", function(){
+    try{
+      if(document.visibilityState === "visible" && NL.jaAbriu && NL.pgAtivo && (NL.pagPendente || nlLerPendente())){ nlVerificarPagamento(true); }
+    }catch(e){}
+  });
+
+  nlInstrumentar();
+
+  var _pend = nlLerPendente();
+  if(_pend && nlLer("netliss_aberto") === 1 && (_pend.fim || 0) > Date.now()){
+    setTimeout(function(){ if(!NL.aberto){ nlAbrirChat("pagamento"); } }, 1200);
+  }
+
+  setTimeout(function(){
+    if(!NL.aberto){ document.getElementById("nl-bolha").style.display = "block"; }
+    setTimeout(function(){
+      if(!NL.aberto){ document.getElementById("nl-teaser").style.display = "block"; }
+    }, 600);
+  }, 3000);
+}
+
+// Blindagem: funciona carregando antes OU depois da pagina abrir
+(function(){
+  function nlIniciarTudo(){
+    nlMontarWidget();
+    nlBootWidget();
+  }
+  if(document.readyState === "loading"){
+    document.addEventListener("DOMContentLoaded", nlIniciarTudo);
+  } else {
+    nlIniciarTudo();
+  }
+})();
+
+// ================================================================
+//  BETA: Liss conversando pelo Dify (mesma cara do chat oficial)
+// ================================================================
+var NL_DIFY = { base: "https://atendimento.netliss.com", code: "crQaCrMQQJN6fDfU", tok: null, tokEm: 0 };
+function nlMdHtml(txt){
+  var NLc = String.fromCharCode(10);
+  var linhas = String(txt || "").split(String.fromCharCode(13)).join("").split(NLc);
+  var out = [];
+  for(var i = 0; i < linhas.length; i++){
+    var l = nlEscapar(linhas[i]);
+    var r = "", pos = 0;
+    while(true){
+      var a = l.indexOf("[", pos);
+      if(a < 0){ r += l.substring(pos); break; }
+      var b = l.indexOf("](", a);
+      var c = (b > -1) ? l.indexOf(")", b + 2) : -1;
+      if(b < 0 || c < 0){ r += l.substring(pos); break; }
+      var rot = l.substring(a + 1, b), url = l.substring(b + 2, c);
+      r += l.substring(pos, a);
+      if(url.indexOf("http") === 0){
+        if(rot === url && url.indexOf("play.google.com") > -1){ rot = "📲 Baixar o app na Play Store"; }
+        else if(rot === url && (url.indexOf("youtu") > -1)){ rot = "▶️ Assistir ao vídeo"; }
+        r += "<a class='nl-link' href='" + url + "' target='_blank' rel='noopener'>" + rot + "</a>";
+      }
+      else { r += l.substring(a, c + 1); }
+      pos = c + 1;
+    }
+    var p = r.split("**");
+    if(p.length > 2){ r = ""; for(var k = 0; k < p.length; k++){ r += (k % 2 === 1 && k < p.length - 1) ? "<b>" + p[k] + "</b>" : p[k]; } }
+    out.push(r);
+  }
+  return out.join("<br>");
+}
+async function nlDifyToken(){
+  // a chave de sessao do Dify nao expira e e ela que liga o cliente a conversa:
+  // fica guardada no aparelho, para a Liss nao "esquecer" a conversa quando a pagina recarrega
+  if(NL_DIFY.tok){ return NL_DIFY.tok; }
+  var salvo = nlLer("netliss_liss_sessao");
+  if(salvo){ NL_DIFY.tok = salvo; return salvo; }
+  var r = await fetch(NL_DIFY.base + "/api/passport", { headers: { "X-App-Code": NL_DIFY.code } });
+  var j = await r.json();
+  NL_DIFY.tok = j.access_token; NL_DIFY.tokEm = Date.now();
+  try{ nlSalvar("netliss_liss_sessao", NL_DIFY.tok, 2592000000); }catch(e){}
+  return NL_DIFY.tok;
+}
+async function nlDifyPergunta(texto, aoBloco){
+  var tok = await nlDifyToken();
+  var fp = "";
+  try{ fp = await nlFpPronto(NL.fp ? 50 : 1200); }catch(e){}
+  var corpo = { inputs: { id_netliss: NL.clientId || "", fp: fp || "" }, query: texto, response_mode: "streaming", conversation_id: NL.difyConv || "" };
+  // sem o "pai" (a ultima mensagem da conversa) o Dify nao entrega o historico para a Liss e ela esquece tudo
+  var pai = nlLer("netliss_liss_pai");
+  if(NL.difyConv && pai && pai.conv === NL.difyConv && pai.msg){ corpo.parent_message_id = pai.msg; }
+  var r = await fetch(NL_DIFY.base + "/api/chat-messages", { method: "POST", headers: { "X-App-Passport": tok, "X-App-Code": NL_DIFY.code, "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
+  if(r.status === 401 && !NL.difyReset){ NL.difyReset = 1; NL_DIFY.tok = null; try{ localStorage.removeItem("netliss_liss_sessao"); }catch(e){} NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto, aoBloco); }
+  if(r.status === 404 && NL.difyConv){ NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto, aoBloco); }
+  if(r.status >= 400){ throw new Error("dify " + r.status); }
+  var resp = "", enviado = 0, parou = false, NL2 = String.fromCharCode(10) + String.fromCharCode(10);
+  // mostra cada paragrafo assim que ele fica pronto (a conversa flui como gente escrevendo)
+  var emitir = function(){
+    if(!aoBloco || parou){ return; }
+    while(true){
+      var resto = resp.slice(enviado), k = resto.indexOf(NL2);
+      if(k < 0){ return; }
+      var bloco = resto.slice(0, k);
+      if(bloco.indexOf("[") > -1){ parou = true; return; }
+      enviado += k + 2;
+      if(bloco.trim()){ aoBloco(bloco.trim()); }
+    }
+  };
+  var tratar = function(ln){
+    if(ln.indexOf("data:") !== 0){ return; }
+    var d = null; try{ d = JSON.parse(ln.substring(5)); }catch(e){ return; }
+    if(d.conversation_id && !NL.difyConv){ NL.difyConv = d.conversation_id; nlSalvarConv(); }
+    var mid = d.message_id || (d.event === "message_end" ? d.id : "");
+    if(mid && d.conversation_id){ try{ nlSalvar("netliss_liss_pai", { conv: d.conversation_id, msg: mid }, 2592000000); }catch(e){} }
+    if(d.event === "agent_message" || d.event === "message"){ resp += (d.answer || ""); emitir(); }
+    if(d.event === "error"){ throw new Error(d.message || "erro"); }
+  };
+  if(r.body && r.body.getReader){
+    var leitor = r.body.getReader(), dec = new TextDecoder(), buf = "";
+    while(true){
+      var pedaco = await leitor.read();
+      if(pedaco.done){ break; }
+      buf += dec.decode(pedaco.value, { stream: true });
+      var j;
+      while((j = buf.indexOf(String.fromCharCode(10))) > -1){ var linha = buf.slice(0, j).trim(); buf = buf.slice(j + 1); tratar(linha); }
+    }
+    if(buf.trim()){ tratar(buf.trim()); }
+  } else {
+    var linhas = (await r.text()).split(String.fromCharCode(10));
+    for(var i = 0; i < linhas.length; i++){ tratar(linhas[i].trim()); }
+  }
+  return { completo: resp.trim(), resto: resp.slice(enviado).trim(), mostrou: enviado > 0 };
+}
+function nlLissLayout(){
+  try{
+    var enc = document.getElementById("nl-encerrar"), inp = document.querySelector("#nl-moldura .nl-input");
+    if(enc && inp && inp.nextElementSibling !== enc){ enc.parentNode.insertBefore(inp, enc); }
+    if(enc){ enc.style.margin = "2px 14px 10px"; }
+  }catch(e){}
+}
+function nlLissSaudacao(){
   var lista = ["Olá! Jesus te abençoe! Eu sou a <b>Liss</b>, da Netliss 😊<br><br>Como você se chama?",
                "Oi! Seja bem-vindo(a) à Netliss 😊 Eu sou a <b>Liss</b>.<br><br>Antes de tudo, qual é o seu nome?",
                "Olá, tudo bem? Aqui é a <b>Liss</b>, da Netliss 🙏<br><br>Como posso te chamar?",
