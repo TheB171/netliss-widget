@@ -3419,10 +3419,12 @@ async function nlDifyPergunta(texto, aoBloco){
   // sem o "pai" (a ultima mensagem da conversa) o Dify nao entrega o historico para a Liss e ela esquece tudo
   var pai = nlLer("netliss_liss_pai");
   if(NL.difyConv && pai && pai.conv === NL.difyConv && pai.msg){ corpo.parent_message_id = pai.msg; }
+  if(NL.difyArquivos && NL.difyArquivos.length){ corpo.files = NL.difyArquivos.map(function(id){ return { type: "image", transfer_method: "local_file", upload_file_id: id }; }); }
   var r = await fetch(NL_DIFY.base + "/api/chat-messages", { method: "POST", headers: { "X-App-Passport": tok, "X-App-Code": NL_DIFY.code, "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
   if(r.status === 401 && !NL.difyReset){ NL.difyReset = 1; NL_DIFY.tok = null; try{ localStorage.removeItem("netliss_liss_sessao"); }catch(e){} NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto, aoBloco); }
   if(r.status === 404 && NL.difyConv){ NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto, aoBloco); }
   if(r.status >= 400){ throw new Error("dify " + r.status); }
+  NL.difyArquivos = null;
   var resp = "", enviado = 0, parou = false, NL2 = String.fromCharCode(10) + String.fromCharCode(10);
   // mostra cada paragrafo assim que ele fica pronto (a conversa flui como gente escrevendo)
   var emitir = function(){
@@ -3528,6 +3530,73 @@ function nlEnviarTexto(){
   nlApiFogo({ acao:"msg", ticket_id: NL.ticket, autor:"cliente", mensagem: txt });
   nlLissResponder(txt.replace(/\[\s*aviso do sistema[^\]]*\]/gi, "(texto do cliente)"));
 }
+// ---------- ANEXO (fotos e prints) ----------
+function nlDemoAnexo(){ nlAnexo(); }
+function nlAnexo(){
+  if(NL.aguardando || NL.encerrado || NL.anexando){ return; }
+  var inp = document.getElementById("nl-arquivo");
+  if(!inp){
+    inp = document.createElement("input");
+    inp.type = "file"; inp.id = "nl-arquivo"; inp.accept = "image/*"; inp.multiple = true; inp.style.display = "none";
+    inp.addEventListener("change", function(){ var fs = Array.prototype.slice.call(inp.files || [], 0, 3); inp.value = ""; if(fs.length){ nlAnexoEnviar(fs); } });
+    document.body.appendChild(inp);
+  }
+  inp.click();
+}
+// reduz a imagem no proprio aparelho (sobe rapido ate no 4G fraco); devolve { blob, mini }
+function nlAnexoReduzir(arq){
+  return new Promise(function(ok){
+    var url = URL.createObjectURL(arq), img = new Image();
+    img.onload = function(){
+      try{
+        var lado = function(max){ var w = img.naturalWidth, h = img.naturalHeight, k = Math.min(1, max / Math.max(w, h)); var c = document.createElement("canvas"); c.width = Math.round(w * k); c.height = Math.round(h * k); var x = c.getContext("2d"); x.fillStyle = "#fff"; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height); return c; };
+        var grande = lado(1600), mini = lado(260).toDataURL("image/jpeg", 0.6);
+        grande.toBlob(function(b){ URL.revokeObjectURL(url); ok({ blob: b || arq, mini: mini }); }, "image/jpeg", 0.85);
+      }catch(e){ URL.revokeObjectURL(url); ok({ blob: arq, mini: "" }); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); ok(null); };
+    img.src = url;
+  });
+}
+async function nlAnexoEnviar(arquivos){
+  NL.anexando = true;
+  var campo = document.getElementById("nl-texto");
+  var legenda = (campo && campo.value.trim()) || "";
+  if(campo){ campo.value = ""; }
+  nlLimparChips();
+  var ids = [], minis = [];
+  try{
+    var tok = await nlDifyToken();
+    for(var i = 0; i < arquivos.length; i++){
+      var red = await nlAnexoReduzir(arquivos[i]);
+      if(!red){ nlSistema("esse arquivo não é uma imagem que eu consiga abrir — envie uma foto ou um print da tela"); continue; }
+      var fd = new FormData();
+      fd.append("file", red.blob, "imagem-" + Date.now() + "-" + i + ".jpg");
+      var r = await fetch(NL_DIFY.base + "/api/files/upload", { method: "POST", headers: { "X-App-Passport": tok, "X-App-Code": NL_DIFY.code }, body: fd });
+      var j = null; try{ j = await r.json(); }catch(e){}
+      if(r.status < 300 && j && j.id){ ids.push(j.id); minis.push(red.mini); }
+      else { nlReportarFalha("anexo", new Error("upload " + r.status)); }
+    }
+  }catch(e){ nlReportarFalha("anexo", e); }
+  NL.anexando = false;
+  if(!ids.length){ nlSistema("não consegui enviar a imagem agora — tenta de novo em instantes"); if(campo && legenda){ campo.value = legenda; } return; }
+  var db = document.createElement("div");
+  db.className = "msg user nl-msg-img";
+  var html = "";
+  for(var k = 0; k < minis.length; k++){ if(minis[k]){ html += "<img class='nl-anexo' src='" + minis[k] + "' alt='imagem enviada'>"; } }
+  if(legenda){ html += "<div>" + nlEscapar(legenda) + "</div>"; }
+  db.innerHTML = html || "📎 imagem enviada";
+  NL.corpo.appendChild(db);
+  nlRolar();
+  setTimeout(nlRolar, 300);
+  nlHistPush("cliente", html || "📎 imagem enviada");
+  nlApiFogo({ acao:"msg", ticket_id: NL.ticket, autor:"cliente", mensagem: "[imagem] " + legenda });
+  NL.difyArquivos = ids;
+  var pergunta = legenda ? legenda.replace(/\[\s*aviso do sistema[^\]]*\]/gi, "(texto do cliente)") : (ids.length > 1 ? "(o cliente enviou estas imagens)" : "(o cliente enviou esta imagem)");
+  nlLissResponder(pergunta);
+}
+(function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.user img.nl-anexo{display:block;max-width:180px;max-height:220px;border-radius:10px;margin:2px 0 4px}#nl-chat .msg.user.nl-msg-img{padding:6px}"; document.head.appendChild(st); }catch(e){} })();
+
 function nlLissFicha(resp){
   var a = resp.indexOf("[FICHA");
   if(a < 0){ return resp; }
