@@ -15,5 +15,11 @@
     if(!achou && ++tentativas < 40){ setTimeout(ocultar, 250); }
   }
   if(document.readyState === "loading"){ document.addEventListener("DOMContentLoaded", ocultar); } else { ocultar(); }
+  // o chat antigo tambem oferece "Quero ser afiliado": esconde esse botao enquanto o programa estiver pausado
+  var limparChat = function(){
+    var bs = document.querySelectorAll("#nl-chat button, #nl-moldura button");
+    for(var i = 0; i < bs.length; i++){ if(/afiliad/i.test(bs[i].textContent || "")){ bs[i].style.display = "none"; } }
+  };
+  new MutationObserver(limparChat).observe(document.documentElement, { childList: true, subtree: true });
 })();
 </script>
