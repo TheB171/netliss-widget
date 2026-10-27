@@ -3461,14 +3461,14 @@ function nlLissLayout(){
   }catch(e){}
 }
 function nlLissSaudacao(){
-  // curta, de acordo com a hora, com uma pergunta facil de responder (testar ou tirar duvida) - sem cara de formulario
+  // simples e elegante, como numa empresa seria: so o cumprimento da hora e "posso ajudar?"
   var h = new Date().getHours();
-  var p = (h >= 5 && h < 12) ? "Bom dia" : (h >= 12 && h < 18) ? "Boa tarde" : "Boa noite";
+  var p = (h >= 5 && h < 12) ? "bom dia" : (h >= 12 && h < 18) ? "boa tarde" : "boa noite";
+  var P = p.charAt(0).toUpperCase() + p.slice(1);
   var lista = [
-    p + "! 😊 Aqui é a <b>Liss</b>, da Netliss.<br><br>Quer testar a internet ilimitada de graça no seu celular ou prefere tirar alguma dúvida antes?",
-    p + "! Que bom te ver por aqui 😊 Eu sou a <b>Liss</b>.<br><br>Posso liberar um teste grátis pra você agora, ou você quer entender melhor como funciona primeiro?",
-    "Oi, " + p.toLowerCase() + "! 😊 Liss aqui, da Netliss.<br><br>Me conta: você já conhece a Netliss ou é a primeira vez?",
-    p + "! Jesus te abençoe 🙏 Sou a <b>Liss</b>, da Netliss.<br><br>Você veio testar a internet ilimitada ou ficou com alguma dúvida?"
+    "Netliss Brasil, " + p + "! 😊<br>Posso ajudar?",
+    P + "! 😊 Posso ajudar?",
+    "Netliss Brasil, " + p + "! Em que posso ajudar? 😊"
   ];
   return lista[Math.floor(Math.random() * lista.length)];
 }
