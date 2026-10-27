@@ -3277,6 +3277,8 @@ function nlBootWidget(){
   var rodape = document.getElementById("nl-id-visual");
   if(rodape){ rodape.textContent = NL.clientId; }
 
+  // Liss nova: historico e tela salvos pelo chat antigo (botoes e planos antigos) nao sao mostrados
+  try{ if(nlLer("netliss_modo") !== "liss2"){ localStorage.removeItem("netliss_hist"); localStorage.removeItem("netliss_estado"); } }catch(e){}
   nlHistRestaurar();
 
   var _r = nlRastro();
@@ -3482,6 +3484,7 @@ function nlInicio(origem){
   NL.pulouFicha = true;
   NL.encerrado = false;
   NL.qtdMsgs = 0;
+  try{ nlSalvar("netliss_modo", "liss2", 2592000000); }catch(e){}
   nlGarantirTicket();
   nlLissLayout();
   NL.modoChamado = "problema";
@@ -3489,6 +3492,19 @@ function nlInicio(origem){
     nlLiberarDigitacao();
   });
 }
+// so retoma conversa que nasceu na Liss nova; tela salva pelo chat antigo (botoes e planos antigos) recomeca do zero
+var nlContinuarAntigo = nlContinuar;
+nlContinuar = function(origem){
+  if(nlLer("netliss_modo") !== "liss2"){
+    try{ localStorage.removeItem("netliss_estado"); localStorage.removeItem("netliss_hist"); }catch(e){}
+    NL.recomecou = true;
+    nlComecar(origem);
+    return;
+  }
+  nlContinuarAntigo(origem);
+};
+var nlRetomarPagamentoAntigo = nlRetomarPagamento;
+nlRetomarPagamento = function(){ if(NL.recomecou){ return; } nlRetomarPagamentoAntigo(); };
 function nlLiberarDigitacao(){
   nlLissLayout();
   NL.modoChamado = "problema";

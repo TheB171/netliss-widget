@@ -90,14 +90,18 @@
     var est = { d: 90, p: 1 };
     var desenhar = function(){
       var total = P[est.p][est.d], meses = MESES[est.d];
-      var porMes = total / meses, base = 24.90 * meses * est.p, eco = base - total;
+      var porMes = total / meses;
+      // economia honesta: plano longo comparado ao plano de 30 dias da MESMA quantidade de pessoas;
+      // no plano de 30 dias com 02+ pessoas, comparado a comprar planos individuais separados
+      var individual = (meses === 1 && est.p > 1);
+      var base = individual ? P[1][30] * est.p : P[est.p][30] * meses, eco = base - total;
       var t = document.getElementById("nlprTotal");
       t.innerHTML = "<span>R$</span>" + brl(total);
       t.classList.remove("pulse"); void t.offsetWidth; t.classList.add("pulse");
       document.getElementById("nlprMes").textContent = meses > 1 ? "Sai por R$" + brl(porMes) + " por mês" : "Por 30 dias de internet ilimitada";
       document.getElementById("nlprPessoa").textContent = est.p > 1 ? "R$" + brl(porMes / est.p) + " por pessoa por mês · " + dois(est.p) + " acessos" : "01 acesso";
       var e = document.getElementById("nlprEco");
-      if(eco > 0.5){ e.style.display = "inline-block"; e.textContent = "Economia de R$" + brl(eco) + " (" + Math.round(eco / base * 100) + "%) comparado a pagar 30 dias de cada vez"; }
+      if(eco > 0.5){ e.style.display = "inline-block"; e.textContent = "Economia de R$" + brl(eco) + " (" + Math.round(eco / base * 100) + "%) " + (individual ? "comparado a " + dois(est.p) + " planos individuais" : "comparado a pagar 30 dias de cada vez"); }
       else { e.style.display = "inline-block"; e.textContent = "Sem fidelidade e sem renovação automática"; }
       var bs = raiz.querySelectorAll(".seg button");
       for(var k = 0; k < bs.length; k++){
