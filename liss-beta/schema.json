@@ -56,7 +56,7 @@
    },
    "get": {
     "operationId": "consultar_conta",
-    "summary": "Consulta a conta de um cliente pelo nome de usuário do app: se existe e quantos dias faltam para vencer.",
+    "summary": "Consulta a conta de um cliente pelo nome de usuário do app: se existe, quando vence e o e-mail cadastrado nesse usuário (email_cadastrado, já parcialmente escondido). Na renovação, o acesso sempre vai para esse e-mail.",
     "parameters": [
      {
       "name": "acao",
@@ -358,8 +358,8 @@
      {
       "name": "email",
       "in": "query",
-      "required": true,
-      "description": "E-mail do cliente (onde recebe o acesso).",
+      "required": false,
+      "description": "E-mail do cliente (onde recebe o acesso). Compra nova: obrigatório, confirmado letra por letra. Renovação: deixe vazio quando consultar_conta trouxe email_cadastrado (o sistema usa o e-mail do usuário); só preencha se não houver e-mail cadastrado.",
       "schema": {
        "type": "string"
       }
@@ -416,6 +416,33 @@
       "description": "Ref da cobrança anterior, só quando o cliente trocar a forma de pagamento (ela é cancelada).",
       "schema": {
        "type": "string"
+      }
+     },
+     {
+      "name": "operadora",
+      "in": "query",
+      "required": false,
+      "description": "Operadora do chip do cliente: TIM, Vivo ou Claro.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "TIM",
+        "Vivo",
+        "Claro"
+       ]
+      }
+     },
+     {
+      "name": "modalidade",
+      "in": "query",
+      "required": false,
+      "description": "PRE ou POS (controle conta como POS).",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "PRE",
+        "POS"
+       ]
       }
      }
     ],
