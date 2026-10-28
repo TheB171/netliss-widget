@@ -3339,13 +3339,35 @@ function nlBootWidget(){
     setTimeout(function(){ if(!NL.aberto){ nlAbrirChat("pagamento"); } }, 1200);
   }
 
-  setTimeout(function(){
+  // no celular, o balão só aparece depois que a pessoa rola a página (para não cobrir o botão do topo)
+  function _nlMostrarBalao(){
     if(!NL.aberto){ document.getElementById("nl-bolha").style.display = "block"; }
     setTimeout(function(){
       if(!NL.aberto){ document.getElementById("nl-teaser").style.display = "block"; }
     }, 600);
+  }
+  setTimeout(function(){
+    if(window.innerWidth <= 860 && (window.scrollY || 0) < 500){
+      var _rolou = function(){ if((window.scrollY || 0) >= 500){ window.removeEventListener("scroll", _rolou); _nlMostrarBalao(); } };
+      window.addEventListener("scroll", _rolou, { passive: true });
+    } else { _nlMostrarBalao(); }
   }, 3000);
 }
+
+// O site avisa a Liss do interesse do cliente (ex.: plano escolhido no simulador): abre o chat e já envia, sem o cliente digitar
+window.nlInteresse = function(texto){
+  try{ nlAbrirChat("planos"); }catch(e){}
+  var tentativas = 0;
+  var t = setInterval(function(){
+    tentativas++;
+    var campo = document.getElementById("nl-texto");
+    if(campo && !NL.aguardando && !NL.encerrado){
+      clearInterval(t);
+      campo.value = String(texto || "").slice(0, 300);
+      try{ nlEnviarTexto(); }catch(e){}
+    } else if(tentativas > 40){ clearInterval(t); }
+  }, 300);
+};
 
 // Blindagem: funciona carregando antes OU depois da pagina abrir
 (function(){
