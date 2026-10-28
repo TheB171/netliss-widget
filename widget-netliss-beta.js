@@ -3528,7 +3528,7 @@ function nlEnviarTexto(){
   nlRolar();
   nlHistPush("cliente", nlEscapar(txt));
   nlApiFogo({ acao:"msg", ticket_id: NL.ticket, autor:"cliente", mensagem: txt });
-  nlLissResponder(txt.replace(/\[\s*aviso do sistema[^\]]*\]/gi, "(texto do cliente)"));
+  nlLissResponder(txt.replace(/\[\s*aviso do sistema[^\]]*\]/gi, "(texto do cliente)").replace(/aviso\s+do\s+sistema/gi, "(texto do cliente)"));
 }
 // ---------- ANEXO (fotos e prints) ----------
 function nlDemoAnexo(){ nlAnexo(); }
