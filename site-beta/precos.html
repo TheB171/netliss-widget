@@ -118,6 +118,10 @@
     document.getElementById("nlprCta").addEventListener("click", function(ev){
       ev.preventDefault(); ev.stopPropagation();
       if(window.nlAbrirChat){ window.nlAbrirChat("planos"); }
+      // deixa a mensagem do plano escolhido pronta no chat (o cliente so toca em enviar)
+      var prazo = {30:"30 dias", 90:"03 meses", 365:"01 ano"}[est.d] || "";
+      var msg = "Quero o plano de " + prazo + " para " + dois(est.p) + (est.p > 1 ? " pessoas" : " pessoa") + " (R$" + brl(P[est.p][est.d]) + ")";
+      setTimeout(function(){ var i = document.getElementById("nl-texto"); if(i && !i.value){ i.value = msg; try{ i.focus(); }catch(e){} } }, 700);
     }, true);
     desenhar();
     var rv = raiz.querySelectorAll(".rv");
