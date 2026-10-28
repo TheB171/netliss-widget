@@ -3749,7 +3749,7 @@ function nlLissCardPagamento(){
 // ===== O chat vigia o pagamento sozinho e a Liss entrega o acesso na conversa =====
 var NL_COBRANCA = "https://hook.us2.make.com/dm9cplrlpx5r5fd7aazeztamiuscfbeg";
 function nlPagVigiar(ref, novo){
-  if(novo){ try{ nlSalvar("netliss_pedido", { ref: ref, t: Date.now() }, 1800000); }catch(e){} }
+  if(novo){ try{ nlSalvar("netliss_pedido", { ref: ref, t: Date.now() }, 7200000); }catch(e){} NL.pedidoAvisado = false; }
   NL.pedidoRef = ref; NL.pedidoInicio = NL.pedidoInicio && !novo ? NL.pedidoInicio : Date.now(); NL.pedidoN = 0;
   clearTimeout(NL.pedidoTimer);
   NL.pedidoTimer = setTimeout(nlPagChecar, 20000);
@@ -3759,10 +3759,13 @@ async function nlPagChecar(){
   // consulta leve (so le o pedido no Make, sem chamar o Mercado Pago): roda a cada 20 s e SO com o chat visivel na tela.
   // Com o cliente no app do banco (pagina escondida) nao consulta nada; quando ele volta, confere na hora.
   var ref = NL.pedidoRef; if(!ref){ return; }
-  if(Date.now() - NL.pedidoInicio > 1800000){ nlPagParar(); return; }
-  if(document.visibilityState === "hidden" || NL.aguardando){ NL.pedidoTimer = setTimeout(nlPagChecar, 20000); return; }
+  // vigia por ate 02 horas: a cada 20 s na primeira meia hora, depois a cada 60 s
+  var passou = Date.now() - NL.pedidoInicio, intervalo = passou > 1800000 ? 60000 : 20000;
+  if(passou > 7200000){ nlPagParar(); return; }
+  if(document.visibilityState === "hidden" || NL.aguardando){ NL.pedidoTimer = setTimeout(nlPagChecar, intervalo); return; }
   NL.pedidoN++;
-  var acao = (NL.pedidoN === 10) ? "status" : "ver";
+  // de tempos em tempos pergunta direto ao Mercado Pago (se ja pagou e a entrega travou, isso dispara a entrega de novo)
+  var acao = (NL.pedidoN === 4 || NL.pedidoN % 10 === 0) ? "status" : "ver";
   var j = null;
   try{ var r = await fetch(NL_COBRANCA + "?acao=" + acao + "&ref=" + encodeURIComponent(ref)); j = await r.json(); }catch(e){ j = null; }
   if(ref !== NL.pedidoRef){ return; }
@@ -3777,7 +3780,12 @@ async function nlPagChecar(){
     nlPagAvisarLiss("O pagamento do pedido " + ref + " foi APROVADO, mas o acesso está sendo finalizado pela equipe com prioridade. Tranquilize o cliente: o acesso chega no e-mail dele. Não abra chamado.");
     return;
   }
-  NL.pedidoTimer = setTimeout(nlPagChecar, 20000);
+  // pagamento ja aprovado, conta ainda sendo criada: o cliente fica sabendo NA HORA (uma vez) e o chat continua vigiando para entregar
+  if((st === "tentando" || st === "aprovado_processando") && !NL.pedidoAvisado){
+    NL.pedidoAvisado = true;
+    nlPagAvisarLiss("O pagamento do pedido " + ref + " foi CONFIRMADO e o acesso está sendo gerado agora. Avise o cliente com alegria e segurança que o pagamento caiu e que o acesso chega em instantes, aqui na conversa e no e-mail dele. Ainda não existe usuário nem senha para entregar: não invente e não peça nada ao cliente.");
+  }
+  NL.pedidoTimer = setTimeout(nlPagChecar, intervalo);
 }
 function nlPagAvisarLiss(txt){
   if(!NL.aberto){ try{ nlAbrirChat("pagamento"); }catch(e){} }
