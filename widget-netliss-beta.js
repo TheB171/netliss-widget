@@ -3415,7 +3415,8 @@ async function nlDifyPergunta(texto, aoBloco){
   var tok = await nlDifyToken();
   var fp = "";
   try{ fp = await nlFpPronto(NL.fp ? 50 : 1200); }catch(e){}
-  var corpo = { inputs: { id_netliss: NL.clientId || "", fp: fp || "" }, query: texto, response_mode: "streaming", conversation_id: NL.difyConv || "" };
+  var hoje = ""; try{ hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }); }catch(e){}
+  var corpo = { inputs: { id_netliss: NL.clientId || "", fp: fp || "", data_hoje: hoje }, query: texto, response_mode: "streaming", conversation_id: NL.difyConv || "" };
   // sem o "pai" (a ultima mensagem da conversa) o Dify nao entrega o historico para a Liss e ela esquece tudo
   var pai = nlLer("netliss_liss_pai");
   if(NL.difyConv && pai && pai.conv === NL.difyConv && pai.msg){ corpo.parent_message_id = pai.msg; }
