@@ -1,0 +1,193 @@
+{
+ "openapi": "3.1.0",
+ "info": {
+  "title": "Netliss Liss n8n",
+  "version": "1.0.0",
+  "description": "Ferramentas do atendimento Netliss (n8n)."
+ },
+ "servers": [
+  {
+   "url": "https://n8n.netliss.com"
+  }
+ ],
+ "paths": {
+  "/webhook/liss/cobranca": {
+   "post": {
+    "operationId": "gerar_cobranca",
+    "summary": "Gera a cobrança do plano na forma que o cliente escolheu (pix OU cartao), sem CPF. Use só depois do teste conectado e com pessoas, prazo, forma de pagamento e e-mail confirmados. Pix responde pix_copia_e_cola e link_qrcode; cartão responde link_cartao. Sempre responde ref.",
+    "parameters": [
+     {
+      "name": "acao",
+      "in": "query",
+      "required": true,
+      "description": "Sempre 'cobrar'.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "cobrar"
+       ],
+       "default": "cobrar"
+      }
+     },
+     {
+      "name": "id_netliss",
+      "in": "query",
+      "required": true,
+      "description": "ID do visitante. Use SEMPRE o valor exato da variável id_netliss do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "nome",
+      "in": "query",
+      "required": true,
+      "description": "Primeiro nome do cliente.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "email",
+      "in": "query",
+      "required": false,
+      "description": "E-mail do cliente (onde recebe o acesso). Compra nova: obrigatório, confirmado letra por letra. Renovação: deixe vazio quando consultar_conta trouxe email_cadastrado (o sistema usa o e-mail do usuário); só preencha se não houver e-mail cadastrado.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "pessoas",
+      "in": "query",
+      "required": true,
+      "description": "Quantidade de acessos: 1 a 5.",
+      "schema": {
+       "type": "integer"
+      }
+     },
+     {
+      "name": "dias",
+      "in": "query",
+      "required": true,
+      "description": "30 (30 dias), 90 (03 meses) ou 365 (01 ano).",
+      "schema": {
+       "type": "integer",
+       "enum": [
+        30,
+        90,
+        365
+       ]
+      }
+     },
+     {
+      "name": "renovar",
+      "in": "query",
+      "required": false,
+      "description": "Usuário do app a renovar. Deixe vazio quando for compra nova.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "forma",
+      "in": "query",
+      "required": true,
+      "description": "pix ou cartao (o que o cliente escolheu).",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "pix",
+        "cartao"
+       ]
+      }
+     },
+     {
+      "name": "anterior",
+      "in": "query",
+      "required": false,
+      "description": "Ref da cobrança anterior, só quando o cliente trocar a forma de pagamento (ela é cancelada).",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "operadora",
+      "in": "query",
+      "required": false,
+      "description": "Operadora do chip do cliente: TIM, Vivo ou Claro.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "TIM",
+        "Vivo",
+        "Claro"
+       ]
+      }
+     },
+     {
+      "name": "modalidade",
+      "in": "query",
+      "required": false,
+      "description": "PRE ou POS (controle conta como POS).",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "PRE",
+        "POS"
+       ]
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  },
+  "/webhook/liss/pagamento-status": {
+   "get": {
+    "operationId": "consultar_pagamento",
+    "summary": "Consulta se a cobrança (pelo ref) foi paga e, se o acesso já foi criado, devolve usuário e senha.",
+    "parameters": [
+     {
+      "name": "acao",
+      "in": "query",
+      "required": true,
+      "description": "Sempre 'status'.",
+      "schema": {
+       "type": "string",
+       "enum": [
+        "status"
+       ],
+       "default": "status"
+      }
+     },
+     {
+      "name": "id_netliss",
+      "in": "query",
+      "required": true,
+      "description": "ID do visitante. Use SEMPRE o valor exato da variável id_netliss do atendimento.",
+      "schema": {
+       "type": "string"
+      }
+     },
+     {
+      "name": "ref",
+      "in": "query",
+      "required": true,
+      "description": "O ref devolvido por gerar_cobranca.",
+      "schema": {
+       "type": "string"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "description": "ok"
+     }
+    }
+   }
+  }
+ }
+}

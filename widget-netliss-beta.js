@@ -3770,7 +3770,7 @@ function nlLissCardPagamento(){
   if(g.cartao && /^https:\/\//.test(g.cartao)){ nlMsgLiss(link(g.cartao, "💳 Pagar com cartão de crédito")); }
 }
 // ===== O chat vigia o pagamento sozinho e a Liss entrega o acesso na conversa =====
-var NL_COBRANCA = "https://hook.us2.make.com/dm9cplrlpx5r5fd7aazeztamiuscfbeg";
+var NL_COBRANCA = "https://n8n.netliss.com/webhook/liss/pagamento-"; // n8n: pagamento-ver (leve) e pagamento-status (consulta o Mercado Pago)
 function nlPagVigiar(ref, novo){
   if(novo){ try{ nlSalvar("netliss_pedido", { ref: ref, t: Date.now() }, 7200000); }catch(e){} NL.pedidoAvisado = false; }
   NL.pedidoRef = ref; NL.pedidoInicio = NL.pedidoInicio && !novo ? NL.pedidoInicio : Date.now(); NL.pedidoN = 0;
@@ -3790,7 +3790,7 @@ async function nlPagChecar(){
   // de tempos em tempos pergunta direto ao Mercado Pago (se ja pagou e a entrega travou, isso dispara a entrega de novo)
   var acao = (NL.pedidoN === 4 || NL.pedidoN % 10 === 0) ? "status" : "ver";
   var j = null;
-  try{ var r = await fetch(NL_COBRANCA + "?acao=" + acao + "&ref=" + encodeURIComponent(ref)); j = await r.json(); }catch(e){ j = null; }
+  try{ var r = await fetch(NL_COBRANCA + acao + "?acao=" + acao + "&ref=" + encodeURIComponent(ref)); j = await r.json(); }catch(e){ j = null; }
   if(ref !== NL.pedidoRef){ return; }
   var st = j && j.status;
   if(st === "entregue" && j.usuario){
