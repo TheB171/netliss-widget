@@ -26,10 +26,11 @@ document.body.appendChild(cx);
 // ================================================================
 
 var CFG = {
-  webhook: "https://hook.us2.make.com/7utigfgghdla4j4loav3fu2leopdwp3o",
-  webhookTeste: "https://hook.us2.make.com/illlqngjivaojdjrsruq7h0qxihjq57f",
-  webhookChamado: "https://hook.us2.make.com/kazb5kdmxqwivry8ydradfi4yvpag599",
-  webhookPag: "https://hook.us2.make.com/3wv4hhwgvnus5a83etltcdm7mghqup2c",
+  webhook: "https://n8n.netliss.com/webhook/netliss/chat",
+  webhookTeste: "https://n8n.netliss.com/webhook/netliss/testes",
+  webhookChamado: "https://n8n.netliss.com/webhook/netliss/chamados",
+  webhookPag: "https://n8n.netliss.com/webhook/netliss/pagamentos",
+  webhookPagAntigo: "https://hook.us2.make.com/3wv4hhwgvnus5a83etltcdm7mghqup2c", // compra pelos botoes (sistema antigo do painel) - decidir na virada
   webhookAf: "https://hook.us2.make.com/k4z1kgqcy8ofo5rgkr4a6l31xwt4emg2",
   playStore: "https://play.google.com/store/apps/details?id=com.netlissbrasil.pro",
   linkInter: "https://inter-co.onelink.me/Qyu7/ste2n6tb",
@@ -163,6 +164,7 @@ async function nlApi(payload, opcoes){
   var destino = CFG.webhook;
   if(rotasTeste.indexOf(payload.acao) > -1){ destino = CFG.webhookTeste; }
   if(rotasPag.indexOf(payload.acao) > -1){ destino = CFG.webhookPag; }
+  if(["pagamento_criar", "pagamento_renovar", "pagamento_status", "acesso_socorro"].indexOf(payload.acao) > -1){ destino = CFG.webhookPagAntigo; }
   if(rotasChamado.indexOf(payload.acao) > -1){ destino = CFG.webhookChamado; }
   if(String(payload.acao || "").indexOf("af_") === 0){ destino = CFG.webhookAf; }
   var url = destino + "?" + partes.join("&");
