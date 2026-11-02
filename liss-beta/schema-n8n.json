@@ -297,7 +297,7 @@
       "name": "email",
       "in": "query",
       "required": true,
-      "description": "E-mail usado na compra.",
+      "description": "E-mail usado na compra. O sistema envia para esse e-mail TODOS os acessos comprados com ele (compras e renovacoes), com a validade de cada um.",
       "schema": {
        "type": "string"
       }
@@ -305,8 +305,8 @@
      {
       "name": "data_compra",
       "in": "query",
-      "required": true,
-      "description": "Data da compra no formato DD/MM/AAAA.",
+      "required": false,
+      "description": "Opcional, nao precisa perguntar. Se o cliente ja informou, pode mandar (DD/MM/AAAA).",
       "schema": {
        "type": "string"
       }
