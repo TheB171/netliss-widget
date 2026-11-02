@@ -3385,7 +3385,7 @@ window.nlInteresse = function(texto){
 // ================================================================
 //  BETA: Liss conversando pelo Dify (mesma cara do chat oficial)
 // ================================================================
-var NL_DIFY = { base: "https://atendimento.netliss.com", code: "crQaCrMQQJN6fDfU", tok: null, tokEm: 0 };
+var NL_DIFY = { base: "https://atendimento.netliss.com", code: "YKQiCT2YHrjA3DdF", tok: null, tokEm: 0 };
 function nlMdHtml(txt){
   var NLc = String.fromCharCode(10);
   var linhas = String(txt || "").split(String.fromCharCode(13)).join("").split(NLc);
