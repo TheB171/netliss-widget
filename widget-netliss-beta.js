@@ -3554,8 +3554,8 @@ function nlEnviarTexto(){
   nlLissResponder(txt.replace(/\[\s*aviso do sistema[^\]]*\]/gi, "(texto do cliente)").replace(/aviso\s+do\s+sistema/gi, "(texto do cliente)"));
 }
 // ---------- ANEXO (fotos e prints) ----------
-// anexo pronto, mas desligado ate o Dify do servidor ter o FILES_URL (a Liss ainda nao enxerga a imagem)
-var NL_ANEXO_ATIVO = false;
+// anexo ligado: o Dify do servidor novo ja entrega a imagem para a Liss
+var NL_ANEXO_ATIVO = true;
 function nlDemoAnexo(){ if(!NL_ANEXO_ATIVO){ nlSistema("envio de arquivos chega na próxima atualização"); return; } nlAnexo(); }
 function nlAnexo(){
   if(NL.aguardando || NL.encerrado || NL.anexando){ return; }
