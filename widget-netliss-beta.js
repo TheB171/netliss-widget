@@ -31,7 +31,7 @@ var CFG = {
   webhookChamado: "https://n8n.netliss.com/webhook/netliss/chamados",
   webhookPag: "https://n8n.netliss.com/webhook/netliss/pagamentos",
   webhookPagAntigo: "https://hook.us2.make.com/3wv4hhwgvnus5a83etltcdm7mghqup2c", // compra pelos botoes (sistema antigo do painel) - decidir na virada
-  webhookAf: "https://hook.us2.make.com/k4z1kgqcy8ofo5rgkr4a6l31xwt4emg2",
+  webhookAf: "https://n8n.netliss.com/webhook/netliss/afiliados",
   playStore: "https://play.google.com/store/apps/details?id=com.netlissbrasil.pro",
   linkInter: "https://inter-co.onelink.me/Qyu7/ste2n6tb",
   videoRot1: "https://youtube.com/watch?v=T2C22IteWv4",
