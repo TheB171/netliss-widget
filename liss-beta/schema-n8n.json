@@ -297,7 +297,7 @@
       "name": "email",
       "in": "query",
       "required": true,
-      "description": "E-mail usado na compra. O sistema envia para esse e-mail TODOS os acessos comprados com ele (compras e renovacoes), com a validade de cada um.",
+      "description": "E-mail usado na compra. O sistema envia para esse e-mail os acessos ATIVOS comprados com ele (com a validade). Se responder motivo nenhum_ativo, o cliente nao tem acesso ativo: ofereca a renovacao.",
       "schema": {
        "type": "string"
       }
