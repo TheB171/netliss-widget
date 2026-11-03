@@ -221,6 +221,8 @@ function nlEnviarRegistro(){
   nlApiFogo({ acao:"msg", ticket_id: NL.ticket, autor:"atendimento", mensagem: bloco });
 }
 function nlApiFogo(payload){
+  // as conversas ficam registradas no Dify; a planilha nao recebe mais cada mensagem
+  if(payload && payload.acao === "msg"){ return; }
   if(NL.silencioso){ return; }
   nlApi(payload, { fogo: true });
 }
@@ -2347,7 +2349,7 @@ function nlDispararChamado(){
     nlMsgLiss("Chamado aberto com sucesso, agora é só aguardar!", function(){
       nlMsgLiss("Você vai receber a sua resposta por e-mail. Os nossos especialistas analisam os chamados de segunda a sexta, das 9h às 18h.", function(){
         nlMsgLiss("Obrigada e Jesus te abençoe!", function(){
-          nlApiFogo({ acao:"ticket_fechar", ticket_id: NL.ticket });
+          nlApiFogo({ acao:"ticket_fechar", ticket_id: NL.ticket, dify: NL.difyConv || "" });
           nlEncerrarEm(1200);
         });
       });
@@ -2478,7 +2480,7 @@ function nlEncerrar(){
   nlLimparChips();
   nlBloquearDigitacao();
   if(NL.pollTimer){ clearInterval(NL.pollTimer); }
-  if(NL.ticket){ nlApiFogo({ acao: "ticket_fechar", ticket_id: NL.ticket }); }
+  if(NL.ticket){ nlApiFogo({ acao: "ticket_fechar", ticket_id: NL.ticket, dify: NL.difyConv || "" }); }
   NL.ticket = null;
   NL.difyConv = null;
   try{ localStorage.removeItem("netliss_ticket"); }catch(e){}
@@ -3649,7 +3651,7 @@ function nlLissFim(){
   try{ nlEnviarRegistro(); }catch(e){}
   nlLimparChips();
   nlBloquearDigitacao();
-  if(NL.ticket){ nlApiFogo({ acao: "ticket_fechar", ticket_id: NL.ticket }); }
+  if(NL.ticket){ nlApiFogo({ acao: "ticket_fechar", ticket_id: NL.ticket, dify: NL.difyConv || "" }); }
   NL.ticket = null; NL.difyConv = null;
   try{ localStorage.removeItem("netliss_ticket"); }catch(e){}
   NL.encerrado = true;
