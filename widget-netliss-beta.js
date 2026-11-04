@@ -3471,6 +3471,8 @@ async function nlDifyPergunta(texto, aoBloco){
     if(d.conversation_id && !NL.difyConv){ NL.difyConv = d.conversation_id; nlSalvarConv(); }
     var mid = d.message_id || (d.event === "message_end" ? d.id : "");
     if(mid && d.conversation_id){ try{ nlSalvar("netliss_liss_pai", { conv: d.conversation_id, msg: mid }, 2592000000); }catch(e){} }
+    // marca quando a Liss usou alguma ferramenta (teste, cobranca...): nesse caso o widget nao repete a pergunta, para nunca duplicar nada
+    if(d.event === "agent_thought" && d.tool){ NL.difyFerramenta = true; }
     if(d.event === "agent_message" || d.event === "message"){ resp += (d.answer || ""); emitir(); }
     if(d.event === "error"){ throw new Error(d.message || "erro"); }
   };
@@ -3669,8 +3671,15 @@ async function nlLissResponder(txt){
   };
   var res = null;
   NL.lissPensando = true;
+  NL.difyFerramenta = false;
   try{ res = await nlDifyPergunta(txt, aoBloco); }catch(e){ res = null; }
-  if(!res && !mostrou){ try{ await new Promise(function(ok){ setTimeout(ok, 1500); }); res = await nlDifyPergunta(txt, aoBloco); }catch(e2){ res = null; } }
+  // queda rapida de conexao: tenta de novo ate 03 vezes (2s, 4s, 6s), so se nada foi mostrado e nenhuma ferramenta rodou
+  var esperas = [2000, 4000, 6000];
+  for(var t = 0; t < esperas.length; t++){
+    var falhou = !res || (!res.completo && !mostrou);
+    if(!falhou || mostrou || NL.difyFerramenta){ break; }
+    try{ await new Promise(function(ok){ setTimeout(ok, esperas[t]); }); res = await nlDifyPergunta(txt, aoBloco); }catch(e2){ res = null; }
+  }
   NL.lissPensando = false;
   await fila;
   nlEsperaDesligar();
