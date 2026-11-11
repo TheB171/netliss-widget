@@ -1,0 +1,283 @@
+{
+ "name": "Netliss | Play Store: avaliações (alerta diário + comparativo às segundas)",
+ "nodes": [
+  {
+   "parameters": {
+    "rule": {
+     "interval": [
+      {
+       "field": "cronExpression",
+       "expression": "12 9 * * *"
+      }
+     ]
+    }
+   },
+   "name": "Todo dia 09:12",
+   "type": "n8n-nodes-base.scheduleTrigger",
+   "typeVersion": 1.2,
+   "position": [
+    0,
+    200
+   ]
+  },
+  {
+   "parameters": {
+    "jsCode": "const H = this.helpers;\nconst APPS = [\n  { id: 'com.netlissbrasil.pro', nome: 'Netliss' },\n  { id: 'com.easyconect.pro', nome: 'Easy Conect' },\n  { id: 'com.dragonnet.pro', nome: 'DragonNet' },\n];\nconst espera = ms => new Promise(r => setTimeout(r, ms));\nconst pega = async (app) => {\n  let tok = null; const out = [];\n  for (let p = 0; p < 4; p++) {\n    const inner = JSON.stringify([null, null, [2, 2, [100, null, tok], null, []], [app, 7]]);\n    const freq = JSON.stringify([[['UsvDTd', inner, null, 'generic']]]);\n    let t = '';\n    for (let k = 1; k <= 3; k++) {\n      try {\n        t = await H.httpRequest({ method: 'POST', url: 'https://play.google.com/_/PlayStoreUi/data/batchexecute?rpcids=UsvDTd&hl=pt_BR&gl=BR', headers: { 'Content-Type': 'application/x-www-form-urlencoded;charset=UTF-8' }, body: 'f.req=' + encodeURIComponent(freq), json: false, timeout: 30000 });\n        break;\n      } catch (e) { if (k === 3) throw e; await espera(3000 * k); }\n    }\n    const line = String(t).split('\\n').find(l => l.includes('\"UsvDTd\"'));\n    if (!line) break;\n    const arr = JSON.parse(line);\n    if (!arr[0][2]) break;\n    const j = JSON.parse(arr[0][2]);\n    for (const x of (j[0] || [])) out.push({ id: x[0], nome: (x[1] && x[1][0]) || '', nota: x[2], texto: String(x[4] || '').replace(/\\s+/g, ' ').trim(), ts: (x[5] && x[5][0]) ? x[5][0] * 1000 : 0 });\n    tok = j[1] && j[1][1];\n    if (!tok) break;\n  }\n  return out;\n};\nconst agora = Date.now(); const DIA = 86400000;\nconst dt = ts => new Date(ts).toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' });\nconst p2 = n => String(n).padStart(2, '0');\nconst media = l => l.length ? (l.reduce((a, x) => a + x.nota, 0) / l.length).toFixed(1).replace('.', ',') : '-';\nconst dados = {}; const erros = [];\nfor (const a of APPS) { try { dados[a.nome] = await pega(a.id); } catch (e) { dados[a.nome] = []; erros.push(a.nome + ': ' + e.message); } }\n\n// 01) alerta no Telegram: avaliações novas da Netliss nas últimas 24h\nconst novas = (dados['Netliss'] || []).filter(x => x.ts >= agora - DIA);\nconst esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nlet alerta = '';\nif (novas.length) {\n  alerta = '⭐ <b>Avaliações novas da Netliss na Play Store (' + p2(novas.length) + ')</b>\\n\\n' + novas.map(x => (x.nota <= 3 ? '⚠️ ' : '') + '★'.repeat(x.nota) + ' <b>' + esc(x.nome) + '</b>: ' + esc(x.texto.slice(0, 400))).join('\\n\\n');\n  if (novas.some(x => x.nota <= 3)) alerta += '\\n\\n⚠️ Tem avaliação baixa: vale responder na Play Console hoje (resposta educada, oferecendo ajuda pela Liss no site).';\n}\n\n// 02) toda segunda-feira: comparativo com IA\nconst dow = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' })).getDay();\nconst placar = APPS.map(a => {\n  const l = dados[a.nome] || []; const r30 = l.filter(x => x.ts >= agora - 30 * DIA); const r90 = l.filter(x => x.ts >= agora - 90 * DIA);\n  return a.nome + ': ' + p2(l.length) + ' avaliações lidas (média ' + media(l) + '); últimos 30 dias: ' + p2(r30.length) + ' (média ' + media(r30) + '); últimos 90 dias: ' + p2(r90.length) + ' (média ' + media(r90) + ', ' + p2(r90.filter(x => x.nota <= 2).length) + ' notas 01 ou 02)';\n}).join('\\n');\nconst textos = APPS.map(a => '### ' + a.nome + '\\n' + (dados[a.nome] || []).filter(x => x.ts >= agora - 120 * DIA && x.texto).map(x => dt(x.ts) + ' | ' + x.nota + ' estrelas | ' + x.texto.slice(0, 500)).join('\\n')).join('\\n\\n').slice(0, 60000);\nconst pedido = {\n  model: 'claude-sonnet-5-5', max_tokens: 8000, thinking: { type: 'adaptive' }, output_config: { effort: 'low' },\n  system: 'Voce e a gerente de marketing da Netliss (app de internet ilimitada para Android) e escreve para o dono, o Jean, um comparativo semanal das avaliacoes reais da Play Store: Netliss x Easy Conect x DragonNet (concorrentes diretos). Escreva em portugues do Brasil, simples, direto, como quem conversa. Numeros sempre com dois digitos (01, 02, 03). Use exatamente estas secoes, cada uma comecando com \"## \": \"## Placar\", \"## O que elogiam na Netliss\", \"## Do que reclamam da Netliss\", \"## Onde os concorrentes falham (oportunidade para nos)\", \"## O que fazer esta semana\". Em cada secao, frases curtas e itens com \"- \". Cite trechos reais curtos entre aspas quando ajudar. Nunca invente avaliacao nem numero: use so os dados recebidos. Em \"O que fazer esta semana\", no maximo 03 acoes praticas, ligadas a vender mais (site, anuncios, atendimento da Liss ou resposta as avaliacoes). Sem texto antes ou depois das secoes.',\n  messages: [{ role: 'user', content: 'PLACAR (dados do sistema):\\n' + placar + '\\n\\nAVALIACOES DOS ULTIMOS 120 DIAS:\\n' + textos }],\n};\nreturn [{ json: { alerta, tem_alerta: !!alerta, segunda: dow === 1, pedido, placar, erros: erros.join(' | ') } }];\n"
+   },
+   "name": "Ler avaliações",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    220,
+    200
+   ]
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "cd75137c-2dbc-4618-95dc-1689b3927f0d",
+       "leftValue": "={{ $json.tem_alerta }}",
+       "rightValue": true,
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "Tem avaliação nova?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    440,
+    100
+   ]
+  },
+  {
+   "parameters": {
+    "resource": "message",
+    "operation": "sendMessage",
+    "chatId": "-1003553184281",
+    "text": "={{ $json.alerta }}",
+    "additionalFields": {
+     "appendAttribution": false,
+     "parse_mode": "HTML"
+    }
+   },
+   "name": "Avisar no Telegram",
+   "type": "n8n-nodes-base.telegram",
+   "typeVersion": 1.2,
+   "position": [
+    660,
+    100
+   ],
+   "credentials": {
+    "telegramApi": {
+     "id": "xj3VXofJFd5JBva5",
+     "name": "Telegram account"
+    }
+   },
+   "retryOnFail": true,
+   "maxTries": 5,
+   "waitBetweenTries": 5000
+  },
+  {
+   "parameters": {
+    "conditions": {
+     "options": {
+      "caseSensitive": true,
+      "leftValue": "",
+      "typeValidation": "loose"
+     },
+     "conditions": [
+      {
+       "id": "9cb93993-012c-4d16-b4ed-817959e15ead",
+       "leftValue": "={{ $json.segunda }}",
+       "rightValue": true,
+       "operator": {
+        "type": "boolean",
+        "operation": "true",
+        "singleValue": true
+       }
+      }
+     ],
+     "combinator": "and"
+    },
+    "options": {}
+   },
+   "name": "É segunda-feira?",
+   "type": "n8n-nodes-base.if",
+   "typeVersion": 2.2,
+   "position": [
+    440,
+    320
+   ]
+  },
+  {
+   "parameters": {
+    "method": "POST",
+    "url": "https://api.anthropic.com/v1/messages",
+    "authentication": "predefinedCredentialType",
+    "nodeCredentialType": "anthropicApi",
+    "sendHeaders": true,
+    "headerParameters": {
+     "parameters": [
+      {
+       "name": "anthropic-version",
+       "value": "2023-06-01"
+      }
+     ]
+    },
+    "sendBody": true,
+    "specifyBody": "json",
+    "jsonBody": "={{ JSON.stringify($json.pedido) }}",
+    "options": {
+     "timeout": 300000
+    }
+   },
+   "name": "IA escreve o comparativo",
+   "type": "n8n-nodes-base.httpRequest",
+   "typeVersion": 4.2,
+   "position": [
+    660,
+    320
+   ],
+   "credentials": {
+    "anthropicApi": {
+     "id": "tyKCg3kHv2b2O1FI",
+     "name": "Anthropic account"
+    }
+   },
+   "retryOnFail": true,
+   "maxTries": 3,
+   "waitBetweenTries": 5000
+  },
+  {
+   "parameters": {
+    "jsCode": "const r = $input.first().json; const base = $('Ler avaliações').first().json;\nlet txt = ''; try { txt = (r.content || []).filter(b => b.type === 'text').map(b => b.text).join('').trim(); } catch (e) {}\nconst esc = s => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');\nconst S = 'font-family:Arial,sans-serif;font-size:15px;line-height:1.6;color:#222;margin:6px 0';\nconst corpo = txt ? txt.split('\\n').map(l => l.trim()).filter(Boolean).map(l => l.startsWith('## ') ? '<h3 style=\"font-family:Arial,sans-serif;margin:26px 0 8px;color:#0b2a1a;border-bottom:1px solid #dde;padding-bottom:4px\">' + esc(l.slice(3)) + '</h3>' : (l.startsWith('- ') ? '<p style=\"' + S + ';margin-left:14px\">• ' + esc(l.slice(2)) + '</p>' : '<p style=\"' + S + '\">' + esc(l) + '</p>')).join('') : '<p style=\"' + S + '\">A IA não conseguiu escrever o comparativo hoje.</p>';\nconst aviso = base.erros ? '<p style=\"' + S + ';color:#a00\">⚠️ Não consegui ler todas as avaliações: ' + esc(base.erros) + '</p>' : '';\nconst html = '<div style=\"max-width:900px;font-family:Arial,sans-serif\"><h2 style=\"margin:0 0 4px\">Play Store: Netliss x concorrentes</h2><p style=\"color:#666;margin:0 0 10px\">Avaliações reais, lidas hoje</p>' + aviso + corpo + '<h3 style=\"font-family:Arial,sans-serif;margin:26px 0 8px;color:#0b2a1a;border-bottom:1px solid #dde;padding-bottom:4px\">Números do sistema</h3>' + base.placar.split('\\n').map(l => '<p style=\"' + S + '\">' + esc(l) + '</p>').join('') + '</div>';\nreturn [{ json: { html, assunto: 'Netliss | Play Store: Netliss x concorrentes (' + new Date().toLocaleDateString('pt-BR', { timeZone: 'America/Sao_Paulo' }).slice(0, 5) + ')' } }];\n"
+   },
+   "name": "Montar e-mail",
+   "type": "n8n-nodes-base.code",
+   "typeVersion": 2,
+   "position": [
+    880,
+    320
+   ]
+  },
+  {
+   "parameters": {
+    "fromEmail": "Netliss <equipe@netliss.com>",
+    "toEmail": "jeanverasdesigner@gmail.com",
+    "subject": "={{ $json.assunto }}",
+    "html": "={{ $json.html }}",
+    "options": {}
+   },
+   "name": "Enviar e-mail",
+   "type": "n8n-nodes-base.emailSend",
+   "typeVersion": 2.1,
+   "position": [
+    1100,
+    320
+   ],
+   "credentials": {
+    "smtp": {
+     "id": "Obn4ur1sjwy9ETvI",
+     "name": "E-mail Netliss (Brevo)"
+    }
+   },
+   "retryOnFail": true,
+   "maxTries": 5,
+   "waitBetweenTries": 5000
+  }
+ ],
+ "connections": {
+  "Todo dia 09:12": {
+   "main": [
+    [
+     {
+      "node": "Ler avaliações",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Ler avaliações": {
+   "main": [
+    [
+     {
+      "node": "Tem avaliação nova?",
+      "type": "main",
+      "index": 0
+     },
+     {
+      "node": "É segunda-feira?",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Tem avaliação nova?": {
+   "main": [
+    [
+     {
+      "node": "Avisar no Telegram",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    []
+   ]
+  },
+  "É segunda-feira?": {
+   "main": [
+    [
+     {
+      "node": "IA escreve o comparativo",
+      "type": "main",
+      "index": 0
+     }
+    ],
+    []
+   ]
+  },
+  "IA escreve o comparativo": {
+   "main": [
+    [
+     {
+      "node": "Montar e-mail",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  },
+  "Montar e-mail": {
+   "main": [
+    [
+     {
+      "node": "Enviar e-mail",
+      "type": "main",
+      "index": 0
+     }
+    ]
+   ]
+  }
+ },
+ "settings": {
+  "executionOrder": "v1",
+  "timezone": "America/Sao_Paulo"
+ }
+}
