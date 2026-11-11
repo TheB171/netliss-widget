@@ -3410,8 +3410,8 @@ function nlMdHtml(txt){
           // link da Play Store: selo oficial do Google Play + o endereco visivel, para o cliente ver que e a loja oficial
           r += "<a class='nl-play' href='" + url + "' target='_blank' rel='noopener'>" +
                "<span class='nl-play-ico'><svg viewBox='0 0 24 24' width='22' height='22' aria-hidden='true'><path fill='#04120a' d='M8 5.2v13.6c0 .8.9 1.3 1.6.8l10.3-6.8c.6-.4.6-1.2 0-1.6L9.6 4.4C8.9 3.9 8 4.4 8 5.2z'/></svg></span>" +
-               "<span class='nl-play-txt'><span class='nl-play-tit'>App Netliss</span><span class='nl-play-sub'>🔒 Google Play · loja oficial</span></span>" +
-               "<span class='nl-play-cta'>Instalar</span></a>";
+               "<span class='nl-play-txt'><span class='nl-play-tit'>" + (url.indexOf("showAllReviews") > -1 ? "Avaliar a Netliss" : "App Netliss") + "</span><span class='nl-play-sub'>🔒 Google Play · loja oficial</span></span>" +
+               "<span class='nl-play-cta'>" + (url.indexOf("showAllReviews") > -1 ? "⭐ Avaliar" : "Instalar") + "</span></a>";
         } else {
           if(rot === url && (url.indexOf("youtu") > -1)){ rot = "▶️ Assistir ao vídeo"; }
           r += "<a class='nl-link' href='" + url + "' target='_blank' rel='noopener'>" + rot + "</a>";
