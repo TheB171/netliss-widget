@@ -3409,8 +3409,9 @@ function nlMdHtml(txt){
         if(url.indexOf("https://play.google.com/") === 0){
           // link da Play Store: selo oficial do Google Play + o endereco visivel, para o cliente ver que e a loja oficial
           r += "<a class='nl-play' href='" + url + "' target='_blank' rel='noopener'>" +
-               "<img src='https://play.google.com/intl/pt-BR/badges/static/images/badges/pt-br_badge_web_generic.png' alt='Disponível no Google Play' onerror=\"this.outerHTML='<span class=nl-play-alt>Abrir na Play Store</span>'\">" +
-               "<span class='nl-play-dom'>🔒 play.google.com · loja oficial do Google</span></a>";
+               "<span class='nl-play-ico'><svg viewBox='0 0 24 24' width='22' height='22' aria-hidden='true'><path fill='#04120a' d='M8 5.2v13.6c0 .8.9 1.3 1.6.8l10.3-6.8c.6-.4.6-1.2 0-1.6L9.6 4.4C8.9 3.9 8 4.4 8 5.2z'/></svg></span>" +
+               "<span class='nl-play-txt'><span class='nl-play-tit'>App Netliss</span><span class='nl-play-sub'>🔒 Google Play · loja oficial</span></span>" +
+               "<span class='nl-play-cta'>Instalar</span></a>";
         } else {
           if(rot === url && (url.indexOf("youtu") > -1)){ rot = "▶️ Assistir ao vídeo"; }
           r += "<a class='nl-link' href='" + url + "' target='_blank' rel='noopener'>" + rot + "</a>";
@@ -3711,7 +3712,7 @@ function nlDigitar(depois, ms){
   setTimeout(depois, ms || 250);
 }
 function nlVoltarAoMenu(){ nlLiberarDigitacao(); }
-(function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.liss a.nl-link{color:#c6ff3d;font-weight:600;text-decoration:underline;word-break:break-word}#nl-chat .msg.liss a.nl-play{display:inline-block;text-decoration:none;margin:4px 0 2px}#nl-chat .msg.liss a.nl-play img{display:block;height:62px;width:auto;margin-left:-8px}#nl-chat .msg.liss .nl-play-dom{display:block;font-size:11.5px;color:#a9b0b8;margin-top:1px}#nl-chat .msg.liss .nl-play-alt{display:inline-block;background:#c6ff3d;color:#050505;font-weight:700;border-radius:10px;padding:10px 14px}"; document.head.appendChild(st); }catch(e){} })();
+(function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.liss a.nl-link{color:#c6ff3d;font-weight:600;text-decoration:underline;word-break:break-word}#nl-chat .msg.liss a.nl-play{display:flex;align-items:center;gap:12px;width:100%;max-width:310px;margin:10px 0 4px;padding:11px 12px 11px 11px;border-radius:16px;text-decoration:none;background:linear-gradient(135deg,rgba(198,244,63,.15),rgba(255,255,255,.03));border:1px solid rgba(198,244,63,.5);box-shadow:0 10px 26px rgba(0,0,0,.38),0 0 22px rgba(198,244,63,.12),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .16s ease,box-shadow .16s ease}#nl-chat .msg.liss a.nl-play:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.45),0 0 30px rgba(198,244,63,.25),inset 0 1px 0 rgba(255,255,255,.1)}#nl-chat .msg.liss .nl-play-ico{width:46px;height:46px;flex-shrink:0;border-radius:13px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#D5FA66,#A9D51F);box-shadow:0 4px 14px rgba(198,244,63,.35),inset 0 1px 0 rgba(255,255,255,.55)}#nl-chat .msg.liss .nl-play-txt{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.25}#nl-chat .msg.liss .nl-play-tit{color:#f4f6ff;font-weight:700;font-size:15px;font-family:Montserrat,sans-serif;letter-spacing:.2px}#nl-chat .msg.liss .nl-play-sub{color:#a9b0b8;font-size:11.5px;white-space:nowrap}#nl-chat .msg.liss .nl-play-cta{margin-left:auto;flex-shrink:0;background:linear-gradient(135deg,#D5FA66,#A9D51F);color:#04120a;font-weight:800;font-size:12.5px;letter-spacing:.3px;border-radius:99px;padding:8px 13px;box-shadow:0 4px 12px rgba(198,244,63,.3)}"; document.head.appendChild(st); }catch(e){} })();
 function nlOcioso(){
   var v = nlLer("netliss_visto");
   if(!v){ return false; }
