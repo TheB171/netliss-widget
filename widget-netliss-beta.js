@@ -3390,6 +3390,8 @@ window.nlInteresse = function(texto){
 //  BETA: Liss conversando pelo Dify (mesma cara do chat oficial)
 // ================================================================
 var NL_DIFY = { base: "https://atendimento.netliss.com", code: "YKQiCT2YHrjA3DdF", tok: null, tokEm: 0 };
+var NL_ICO_PLAY = "<svg class='nl-badge-ico' viewBox='0 0 512 512' aria-hidden='true'><path fill='#00A0FF' d='M48 24 L292 256 L48 488 Z'/><path fill='#00E676' d='M48 24 L384 207 L292 256 Z'/><path fill='#FF3D4A' d='M48 488 L292 256 L384 305 Z'/><path fill='#FFD400' d='M384 207 L470 256 L384 305 L292 256 Z'/></svg>";
+var NL_ICO_YT = "<svg class='nl-badge-ico' viewBox='0 0 28 20' aria-hidden='true'><rect width='28' height='20' rx='5' fill='#FF0000'/><path fill='#fff' d='M11.2 5.6v8.8l7.6-4.4z'/></svg>";
 function nlMdHtml(txt){
   var NLc = String.fromCharCode(10);
   var linhas = String(txt || "").split(String.fromCharCode(13)).join("").split(NLc);
@@ -3407,14 +3409,18 @@ function nlMdHtml(txt){
       r += l.substring(pos, a);
       if(url.indexOf("http") === 0){
         if(url.indexOf("https://play.google.com/") === 0){
-          // link da Play Store: selo oficial do Google Play + o endereco visivel, para o cliente ver que e a loja oficial
-          r += "<a class='nl-play' href='" + url + "' target='_blank' rel='noopener'>" +
-               "<span class='nl-play-ico'><svg viewBox='0 0 24 24' width='22' height='22' aria-hidden='true'><path fill='#04120a' d='M8 5.2v13.6c0 .8.9 1.3 1.6.8l10.3-6.8c.6-.4.6-1.2 0-1.6L9.6 4.4C8.9 3.9 8 4.4 8 5.2z'/></svg></span>" +
-               "<span class='nl-play-txt'><span class='nl-play-tit'>" + (url.indexOf("showAllReviews") > -1 ? "Avaliar a Netliss" : "App Netliss") + "</span><span class='nl-play-sub'>🔒 Google Play · loja oficial</span></span>" +
-               "<span class='nl-play-cta'>" + (url.indexOf("showAllReviews") > -1 ? "⭐ Avaliar" : "Instalar") + "</span></a>";
+          // link da Play Store: selo no padrao oficial do Google Play (preto, borda fina) + aviso claro logo abaixo
+          var _av = url.indexOf("showAllReviews") > -1;
+          r += "<span class='nl-badge-wrap'><a class='nl-badge' href='" + url + "' target='_blank' rel='noopener'>" + NL_ICO_PLAY +
+               "<span class='nl-badge-txt'><span class='l1'>" + (_av ? "Avalie no" : "Disponível no") + "</span><span class='l2'>Google Play</span></span></a>" +
+               "<span class='nl-badge-dica'>" + (_av ? "👆 Toque no botão acima para avaliar a Netliss na Play Store." : "👆 Toque no botão acima para baixar o app Netliss direto da Play Store, a loja oficial do Google.") + "</span></span>";
         } else {
-          if(rot === url && (url.indexOf("youtu") > -1)){ rot = "▶️ Assistir ao vídeo"; }
-          r += "<a class='nl-link' href='" + url + "' target='_blank' rel='noopener'>" + rot + "</a>";
+          if(url.indexOf("youtu") > -1){
+            r += "<span class='nl-badge-wrap'><a class='nl-badge' href='" + url + "' target='_blank' rel='noopener'>" + NL_ICO_YT +
+                 "<span class='nl-badge-txt'><span class='l1'>Assista no</span><span class='l2'>YouTube</span></span></a></span>";
+          } else {
+            r += "<a class='nl-link' href='" + url + "' target='_blank' rel='noopener'>" + rot + "</a>";
+          }
         }
       }
       else { r += l.substring(a, c + 1); }
@@ -3712,7 +3718,7 @@ function nlDigitar(depois, ms){
   setTimeout(depois, ms || 250);
 }
 function nlVoltarAoMenu(){ nlLiberarDigitacao(); }
-(function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.liss a.nl-link{color:#c6ff3d;font-weight:600;text-decoration:underline;word-break:break-word}#nl-chat .msg.liss a.nl-play{display:flex;align-items:center;gap:12px;width:100%;max-width:310px;margin:10px 0 4px;padding:11px 12px 11px 11px;border-radius:16px;text-decoration:none;background:linear-gradient(135deg,rgba(198,244,63,.15),rgba(255,255,255,.03));border:1px solid rgba(198,244,63,.5);box-shadow:0 10px 26px rgba(0,0,0,.38),0 0 22px rgba(198,244,63,.12),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .16s ease,box-shadow .16s ease}#nl-chat .msg.liss a.nl-play:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.45),0 0 30px rgba(198,244,63,.25),inset 0 1px 0 rgba(255,255,255,.1)}#nl-chat .msg.liss .nl-play-ico{width:46px;height:46px;flex-shrink:0;border-radius:13px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#D5FA66,#A9D51F);box-shadow:0 4px 14px rgba(198,244,63,.35),inset 0 1px 0 rgba(255,255,255,.55)}#nl-chat .msg.liss .nl-play-txt{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.25}#nl-chat .msg.liss .nl-play-tit{color:#f4f6ff;font-weight:700;font-size:15px;font-family:Montserrat,sans-serif;letter-spacing:.2px}#nl-chat .msg.liss .nl-play-sub{color:#a9b0b8;font-size:11.5px;white-space:nowrap}#nl-chat .msg.liss .nl-play-cta{margin-left:auto;flex-shrink:0;background:linear-gradient(135deg,#D5FA66,#A9D51F);color:#04120a;font-weight:800;font-size:12.5px;letter-spacing:.3px;border-radius:99px;padding:8px 13px;box-shadow:0 4px 12px rgba(198,244,63,.3)}"; document.head.appendChild(st); }catch(e){} })();
+(function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.liss a.nl-link{color:#c6ff3d;font-weight:600;text-decoration:underline;word-break:break-word}#nl-moldura .nl-badge-wrap{display:block;margin:12px 0 2px}#nl-moldura .nl-badge{display:inline-flex;align-items:center;gap:11px;background:#000;color:#fff;border:1px solid #a6a6a6;border-radius:11px;padding:7px 18px 7px 13px;text-decoration:none;cursor:pointer;font-family:Inter,Arial,sans-serif;box-shadow:0 8px 22px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.06);transition:transform .15s ease,border-color .15s ease,box-shadow .15s ease}#nl-moldura .nl-badge:hover{border-color:#fff;transform:translateY(-1px);box-shadow:0 12px 26px rgba(0,0,0,.55),0 0 0 3px rgba(198,244,63,.12)}#nl-moldura .nl-badge-ico{width:25px;height:25px;flex-shrink:0;display:block}#nl-moldura .nl-badge-txt{display:flex;flex-direction:column;align-items:flex-start;text-align:left}#nl-moldura .nl-badge .l1{font-size:9.5px;font-weight:500;letter-spacing:.7px;text-transform:uppercase;color:#fff;opacity:.92;line-height:1.1}#nl-moldura .nl-badge .l2{font-size:19px;font-weight:600;letter-spacing:-.2px;color:#fff;line-height:1.2}#nl-moldura .nl-badge-btn{margin-top:2px}#nl-moldura .nl-badge-dica{display:block;font-size:12.5px;line-height:1.5;color:#a9b0b8;margin-top:9px}#nl-chat .msg.liss a.nl-play{display:flex;align-items:center;gap:12px;width:100%;max-width:310px;margin:10px 0 4px;padding:11px 12px 11px 11px;border-radius:16px;text-decoration:none;background:linear-gradient(135deg,rgba(198,244,63,.15),rgba(255,255,255,.03));border:1px solid rgba(198,244,63,.5);box-shadow:0 10px 26px rgba(0,0,0,.38),0 0 22px rgba(198,244,63,.12),inset 0 1px 0 rgba(255,255,255,.08);transition:transform .16s ease,box-shadow .16s ease}#nl-chat .msg.liss a.nl-play:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.45),0 0 30px rgba(198,244,63,.25),inset 0 1px 0 rgba(255,255,255,.1)}#nl-chat .msg.liss .nl-play-ico{width:46px;height:46px;flex-shrink:0;border-radius:13px;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,#D5FA66,#A9D51F);box-shadow:0 4px 14px rgba(198,244,63,.35),inset 0 1px 0 rgba(255,255,255,.55)}#nl-chat .msg.liss .nl-play-txt{display:flex;flex-direction:column;gap:2px;min-width:0;line-height:1.25}#nl-chat .msg.liss .nl-play-tit{color:#f4f6ff;font-weight:700;font-size:15px;font-family:Montserrat,sans-serif;letter-spacing:.2px}#nl-chat .msg.liss .nl-play-sub{color:#a9b0b8;font-size:11.5px;white-space:nowrap}#nl-chat .msg.liss .nl-play-cta{margin-left:auto;flex-shrink:0;background:linear-gradient(135deg,#D5FA66,#A9D51F);color:#04120a;font-weight:800;font-size:12.5px;letter-spacing:.3px;border-radius:99px;padding:8px 13px;box-shadow:0 4px 12px rgba(198,244,63,.3)}"; document.head.appendChild(st); }catch(e){} })();
 function nlOcioso(){
   var v = nlLer("netliss_visto");
   if(!v){ return false; }
@@ -3735,14 +3741,14 @@ function nlLissCopiarU(){ nlCopiarCred(0); }
 function nlLissCopiarS(){ nlCopiarCred(1); }
 function nlLissVideoTeste(){
   nlCard("<div style='position:relative;padding-bottom:56%;height:0;border-radius:12px;overflow:hidden;margin-bottom:11px;border:1px solid rgba(255,255,255,.09)'><iframe src='" + CFG.videoTeste + "' style='position:absolute;top:0;left:0;width:100%;height:100%;border:0' title='Como fazer o teste' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' referrerpolicy='strict-origin-when-cross-origin' allowfullscreen></iframe></div>" +
-    "<button class='botao' style='width:100%;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none' data-vivo='1' onclick='nlVideoGrande()'>Ver em tela maior</button>");
+    "<button class='nl-badge nl-badge-btn' data-vivo='1' onclick='nlVideoGrande()'>" + NL_ICO_YT + "<span class='nl-badge-txt'><span class='l1'>Assista em tela cheia</span><span class='l2'>YouTube</span></span></button>");
 }
 function nlLissVideosRot(){
   var _tit = ["Configurar o celular que vai rotear", "Conectar de outro celular", "Conectar de um notebook"];
   for(var _v = 0; _v < _tit.length; _v++){
     nlCard("<div class='titulo'>" + _tit[_v] + "</div>" +
       "<div style='position:relative;padding-bottom:56%;height:0;border-radius:12px;overflow:hidden;margin:8px 0 11px;border:1px solid rgba(255,255,255,.09)'><iframe src='" + CFG.videosRot[_v] + "' loading='lazy' style='position:absolute;top:0;left:0;width:100%;height:100%;border:0' title='" + _tit[_v] + "' allow='accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share' referrerpolicy='strict-origin-when-cross-origin' allowfullscreen></iframe></div>" +
-      "<button class='botao' style='width:100%;background:rgba(255,255,255,.1);color:#f4f6ff;box-shadow:none' data-vivo='1' onclick='nlVideoGrande(" + (_v + 1) + ")'>Ver em tela maior</button>");
+      "<button class='nl-badge nl-badge-btn' data-vivo='1' onclick='nlVideoGrande(" + (_v + 1) + ")'>" + NL_ICO_YT + "<span class='nl-badge-txt'><span class='l1'>Assista em tela cheia</span><span class='l2'>YouTube</span></span></button>");
   }
 }
 function nlLissTag(resp, nome){
