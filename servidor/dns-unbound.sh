@@ -66,6 +66,18 @@ forward-zone:
     forward-addr: 1.0.0.1
     forward-addr: 8.8.4.4
 EOF
+# chave de seguranca do DNS (o Unbound precisa dela para ligar)
+mkdir -p /var/lib/unbound; chown unbound:unbound /var/lib/unbound 2>/dev/null
+if [ ! -s /var/lib/unbound/root.key ]; then
+  runuser -u unbound -- unbound-anchor -a /var/lib/unbound/root.key >/dev/null 2>&1 || true
+fi
+if [ ! -s /var/lib/unbound/root.key ] && [ -s /usr/share/dns/root.key ]; then
+  cp /usr/share/dns/root.key /var/lib/unbound/root.key; chown unbound:unbound /var/lib/unbound/root.key
+fi
+if [ ! -s /var/lib/unbound/root.key ]; then
+  # sem a chave, desliga so a checagem extra (os servidores 1.1.1.1 e 8.8.8.8 ja fazem essa checagem)
+  mv -f /etc/unbound/unbound.conf.d/root-auto-trust-anchor-file.conf /root/root-auto-trust-anchor-file.conf.desligado 2>/dev/null
+fi
 unbound-checkconf || { echo "!! Configuracao do Unbound com erro."; desfazer; }
 
 # 03. a memoria antiga deixa de ouvir no endereco dos programas (o Unbound passa a responder ali)
