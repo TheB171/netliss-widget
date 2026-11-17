@@ -3299,6 +3299,7 @@ function nlBootWidget(){
     nlApiFogo({ acao: "retorno", origem:_r.origem });
   }
   setTimeout(function(){ try{ nlIniciarFp(); }catch(e){} }, 1500);
+  setTimeout(function(){ try{ nlLissRetornoTeste("carregou"); }catch(e){} }, 3500);
 
   document.getElementById("nl-texto").addEventListener("keydown", function(ev){
     if(ev.key === "Enter"){ nlEnviarTexto(); }
@@ -3569,6 +3570,7 @@ function nlEnviarTexto(){
   NL.corpo.appendChild(db);
   nlRolar();
   nlHistPush("cliente", nlEscapar(txt));
+  nlFichaGravar({ clienteEm: Date.now() });
   nlApiFogo({ acao:"msg", ticket_id: NL.ticket, autor:"cliente", mensagem: txt });
   nlLissResponder(txt.replace(/\[\s*aviso do sistema[^\]]*\]/gi, "(texto do cliente)").replace(/aviso\s+do\s+sistema/gi, "(texto do cliente)"));
 }
@@ -3604,6 +3606,7 @@ function nlAnexoReduzir(arq){
 }
 async function nlAnexoEnviar(arquivos){
   NL.anexando = true;
+  nlFichaGravar({ clienteEm: Date.now() });
   var campo = document.getElementById("nl-texto");
   var legenda = (campo && campo.value.trim()) || "";
   if(campo){ campo.value = ""; }
@@ -3741,8 +3744,42 @@ function nlLissValorApos(txt, rotulo){
 }
 function nlLissCredenciais(txt){
   var u = nlLissValorApos(txt, "Usuário:"), sh = nlLissValorApos(txt, "Senha:");
-  if(u && sh && u.length >= 4 && sh.length >= 4){ NL.copiaUser = u; NL.copiaSenha = sh; NL.lissCopiar = true; nlFichaGravar({ testou: 1, testeEm: Date.now() }); }
+  if(u && sh && u.length >= 4 && sh.length >= 4){
+    NL.copiaUser = u; NL.copiaSenha = sh; NL.lissCopiar = true; nlFichaGravar({ testou: 1, testeEm: Date.now() });
+    // teste grátis entregue: guarda a hora para a Liss puxar a conversa quando o cliente voltar ao chat
+    if(/teste gr[aá]tis liberado/i.test(txt)){ nlFichaGravar({ testeLissEm: Date.now() }); }
+  }
 }
+// ---------- VOLTA DEPOIS DO TESTE ----------
+// Dado real (nov/2026): a maioria de quem conecta no teste vai para o app e nunca mais volta ao chat.
+// Quando o cliente volta para a aba (ou reabre o site em até 24h) sem ter dito nada depois do teste,
+// a Liss puxa a conversa UMA vez ("E aí, conectou?"). Nada acontece se ele já falou, já comprou ou se a conversa acabou.
+function nlLissRetornoTeste(origem){
+  try{
+    if(NL.encerrado || NL.aguardando || NL.lissPensando || NL.pedidoRef){ return; }
+    var f = nlFichaLer(), t = f.testeLissEm || 0;
+    if(!t || f.retornoFeito === t){ return; }
+    if(f.comprou && f.comprou > t){ return; }
+    if((f.clienteEm || 0) > t){ return; }
+    var min = Math.round((Date.now() - t) / 60000);
+    if(min < 3 || min > 1440){ return; }
+    var tk = nlLer("netliss_ticket"), es = nlLer("netliss_estado") || {};
+    if(!tk || !tk.id || !tk.dify || es.encerrado || nlOcioso()){ return; }
+    var avisar = function(){
+      if(!NL.difyConv || NL.encerrado || NL.aguardando || NL.lissPensando){ return; }
+      var f2 = nlFichaLer();
+      if(f2.retornoFeito === t || (f2.clienteEm || 0) > t){ return; }
+      nlFichaGravar({ retornoFeito: t });
+      var dd = function(n){ return n < 10 ? "0" + n : String(n); };
+      var quando = min < 60 ? (dd(min) + " minutos") : (dd(Math.round(min / 60)) + " hora(s)");
+      nlLissResponder("[AVISO DO SISTEMA - não foi o cliente que escreveu] O cliente voltou ao chat " + quando + " depois de receber o teste grátis e ainda não disse nada. Puxe a conversa com UMA mensagem curta e calorosa" + (min >= 60 ? ": o teste de 01 hora já acabou; pergunte se ele conseguiu conectar e o que achou (se não conseguiu avaliar, ofereça outro teste)." : ": pergunte se já conectou."));
+    };
+    if(!NL.aberto){ nlAbrirChat("retorno_teste"); setTimeout(avisar, 1800); } else { setTimeout(avisar, 600); }
+  }catch(e){}
+}
+document.addEventListener("visibilitychange", function(){
+  if(document.visibilityState === "visible"){ setTimeout(function(){ nlLissRetornoTeste("aba"); }, 700); }
+});
 function nlLissCopiarU(){ nlCopiarCred(0); }
 function nlLissCopiarS(){ nlCopiarCred(1); }
 function nlLissVideoTeste(){
