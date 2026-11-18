@@ -3681,9 +3681,10 @@ async function nlLissResponder(txt){
   nlTravar(true);
   nlEsperaLigar();
   var fila = Promise.resolve(), mostrou = false;
+  NL.credInline = false;
   var aoBloco = function(bloco){
     mostrou = true;
-    fila = fila.then(function(){ return new Promise(function(ok){ nlEsperaDesligar(); nlMsgLiss(nlMdHtml(bloco), function(){ if(NL.lissPensando){ nlEsperaLigar(); } ok(); }); }); });
+    fila = fila.then(function(){ return new Promise(function(ok){ nlEsperaDesligar(); nlMsgLiss(nlCredInline(bloco, nlMdHtml(bloco)), function(){ if(NL.lissPensando){ nlEsperaLigar(); } ok(); }); }); });
   };
   var res = null;
   NL.lissPensando = true;
@@ -3717,7 +3718,7 @@ async function nlLissResponder(txt){
     if(i >= blocos.length){ nlTravar(false); nlLissAcoes(acoes, fim); return; }
     var b = blocos[i++].trim();
     if(!b){ proximo(); return; }
-    nlMsgLiss(nlMdHtml(b), proximo);
+    nlMsgLiss(nlCredInline(b, nlMdHtml(b)), proximo);
   };
   proximo();
 }
@@ -3780,6 +3781,24 @@ function nlLissRetornoTeste(origem){
 document.addEventListener("visibilitychange", function(){
   if(document.visibilityState === "visible"){ setTimeout(function(){ nlLissRetornoTeste("aba"); }, 700); }
 });
+// Botões "Copiar usuário" e "Copiar senha" logo abaixo das credenciais, no mesmo balão (teste e compra).
+// O valor fica no próprio botão, então continua funcionando se o cliente recarregar a página.
+function nlCredInline(bloco, html){
+  try{
+    var u = nlLissValorApos(bloco, "Usuário:"), sh = nlLissValorApos(bloco, "Senha:");
+    if(u && sh && u.length >= 4 && sh.length >= 4 && /^[A-Za-z0-9._@-]+$/.test(u) && /^[A-Za-z0-9._@!#$%*-]+$/.test(sh)){
+      NL.copiaUser = u; NL.copiaSenha = sh; NL.credInline = true;
+      return html + "<div class='nl-cred-btns'><button class='chip' data-vivo='1' data-v='" + nlEscapar(u) + "' data-rot='Copiar usuário' onclick='nlCopiarBtn(this)'>Copiar usuário</button><button class='chip' data-vivo='1' data-v='" + nlEscapar(sh) + "' data-rot='Copiar senha' onclick='nlCopiarBtn(this)'>Copiar senha</button></div>";
+    }
+  }catch(e){}
+  return html;
+}
+function nlCopiarBtn(btn){
+  var v = btn && btn.getAttribute("data-v"); if(!v){ return; }
+  var ok = function(){ btn.textContent = "Copiado!"; setTimeout(function(){ btn.textContent = btn.getAttribute("data-rot") || "Copiar"; }, 1600); };
+  if(navigator.clipboard && navigator.clipboard.writeText){ navigator.clipboard.writeText(String(v)).then(ok, function(){ nlCopiarFallback(v); ok(); }); } else { nlCopiarFallback(v); ok(); }
+}
+(function(){ try{ var st = document.createElement("style"); st.textContent = "#nl-chat .msg.liss .nl-cred-btns{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}#nl-chat .msg.liss .nl-cred-btns .chip{margin:0}"; document.head.appendChild(st); }catch(e){} })();
 function nlLissCopiarU(){ nlCopiarCred(0); }
 function nlLissCopiarS(){ nlCopiarCred(1); }
 function nlLissVideoTeste(){
@@ -3886,8 +3905,10 @@ function nlLissAcoes(acoes, fim){
   nlLissCardPagamento();
   if(NL.lissCopiar){
     NL.lissCopiar = false;
-    nlCard("<button class='botao' style='width:100%;margin-bottom:8px' data-vivo='1' onclick='nlCopiarCred(0, this)'>Copiar usuário</button><button class='botao' style='width:100%' data-vivo='1' onclick='nlCopiarCred(1, this)'>Copiar senha</button>");
+    // os botões já foram junto do usuário e da senha (no mesmo balão); o cartão no fim fica só de reserva
+    if(!NL.credInline){ nlCard("<button class='botao' style='width:100%;margin-bottom:8px' data-vivo='1' onclick='nlCopiarCred(0, this)'>Copiar usuário</button><button class='botao' style='width:100%' data-vivo='1' onclick='nlCopiarCred(1, this)'>Copiar senha</button>"); }
   }
+  NL.credInline = false;
   for(var i = 0; i < acoes.length; i++){
     if(acoes[i] === "VIDEO_TESTE"){ nlLissVideoTeste(); }
     if(acoes[i] === "VIDEOS_ROTEAMENTO"){ nlLissVideosRot(); }
