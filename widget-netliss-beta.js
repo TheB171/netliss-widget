@@ -3451,6 +3451,34 @@ async function nlDifyToken(){
   try{ nlSalvar("netliss_liss_sessao", NL_DIFY.tok, 2592000000); }catch(e){}
   return NL_DIFY.tok;
 }
+// pergunta ao Dify qual e a ultima mensagem desta conversa (a fonte da verdade do historico)
+async function nlDifyUltima(){
+  if(!NL.difyConv){ return null; }
+  var tok = await nlDifyToken();
+  var ctl = null; try{ ctl = new AbortController(); setTimeout(function(){ try{ ctl.abort(); }catch(e){} }, 6000); }catch(e){}
+  var r = await fetch(NL_DIFY.base + "/api/messages?conversation_id=" + encodeURIComponent(NL.difyConv) + "&limit=1", { headers: { "X-App-Passport": tok, "X-App-Code": NL_DIFY.code }, signal: ctl ? ctl.signal : undefined });
+  if(r.status >= 400){ return null; }
+  var j = await r.json();
+  var d = (j && j.data) || [];
+  return d.length ? d[d.length - 1] : null;
+}
+// a resposta caiu no caminho: confere se o Dify recebeu a pergunta e, se recebeu, espera a resposta ficar pronta e entrega
+async function nlDifyRecuperar(texto, desde){
+  // ate ~30 s: se a resposta nao aparecer, e porque a conexao caiu antes e o Dify descartou; ai a pergunta e enviada de novo
+  for(var t = 0; t < 10; t++){
+    var u = null; try{ u = await nlDifyUltima(); }catch(e){ u = null; }
+    if(!u){ return null; }
+    var mesma = String(u.query || "").trim() === String(texto || "").trim() && (Number(u.created_at || 0) * 1000) >= (desde - 120000);
+    if(!mesma){ return null; }
+    NL.difyPai = { conv: NL.difyConv, msg: u.id };
+    try{ nlSalvar("netliss_liss_pai", NL.difyPai, 2592000000); }catch(e){}
+    var a = String(u.answer || "").trim();
+    if(a){ return { completo: a, resto: a, mostrou: false, recuperado: true }; }
+    if(u.status === "error"){ return null; }
+    await new Promise(function(ok){ setTimeout(ok, 3000); });
+  }
+  return null;
+}
 async function nlDifyPergunta(texto, aoBloco){
   var tok = await nlDifyToken();
   var fp = "";
@@ -3458,8 +3486,15 @@ async function nlDifyPergunta(texto, aoBloco){
   var hoje = ""; try{ hoje = new Date().toLocaleDateString("pt-BR", { timeZone: "America/Sao_Paulo" }); }catch(e){}
   var corpo = { inputs: { id_netliss: NL.clientId || "", fp: fp || "", data_hoje: hoje }, query: texto, response_mode: "streaming", conversation_id: NL.difyConv || "" };
   // sem o "pai" (a ultima mensagem da conversa) o Dify nao entrega o historico para a Liss e ela esquece tudo
-  var pai = nlLer("netliss_liss_pai");
-  if(NL.difyConv && pai && pai.conv === NL.difyConv && pai.msg){ corpo.parent_message_id = pai.msg; }
+  // a fonte principal e o proprio Dify (ultima mensagem da conversa); reserva: memoria da pagina e depois o aparelho
+  // (antes era so o aparelho: em navegador que nao guarda dados a Liss perdia a memoria a cada mensagem)
+  var paiId = "";
+  if(NL.difyConv){
+    try{ var ult = await nlDifyUltima(); if(ult && ult.id){ paiId = ult.id; } }catch(e){}
+    if(!paiId && NL.difyPai && NL.difyPai.conv === NL.difyConv && NL.difyPai.msg){ paiId = NL.difyPai.msg; }
+    if(!paiId){ var pai = nlLer("netliss_liss_pai"); if(pai && pai.conv === NL.difyConv && pai.msg){ paiId = pai.msg; } }
+  }
+  if(paiId){ corpo.parent_message_id = paiId; }
   if(NL.difyArquivos && NL.difyArquivos.length){ corpo.files = NL.difyArquivos.map(function(id){ return { type: "image", transfer_method: "local_file", upload_file_id: id }; }); }
   var r = await fetch(NL_DIFY.base + "/api/chat-messages", { method: "POST", headers: { "X-App-Passport": tok, "X-App-Code": NL_DIFY.code, "Content-Type": "application/json" }, body: JSON.stringify(corpo) });
   if(r.status === 401 && !NL.difyReset){ NL.difyReset = 1; NL_DIFY.tok = null; try{ localStorage.removeItem("netliss_liss_sessao"); }catch(e){} NL.difyConv = null; nlSalvarConv(); return nlDifyPergunta(texto, aoBloco); }
@@ -3484,7 +3519,7 @@ async function nlDifyPergunta(texto, aoBloco){
     var d = null; try{ d = JSON.parse(ln.substring(5)); }catch(e){ return; }
     if(d.conversation_id && !NL.difyConv){ NL.difyConv = d.conversation_id; nlSalvarConv(); }
     var mid = d.message_id || (d.event === "message_end" ? d.id : "");
-    if(mid && d.conversation_id){ try{ nlSalvar("netliss_liss_pai", { conv: d.conversation_id, msg: mid }, 2592000000); }catch(e){} }
+    if(mid && d.conversation_id){ NL.difyPai = { conv: d.conversation_id, msg: mid }; try{ nlSalvar("netliss_liss_pai", NL.difyPai, 2592000000); }catch(e){} }
     // marca quando a Liss usou alguma ferramenta (teste, cobranca...): nesse caso o widget nao repete a pergunta, para nunca duplicar nada
     if(d.event === "agent_thought" && d.tool){ NL.difyFerramenta = true; }
     if(d.event === "agent_message" || d.event === "message"){ resp += (d.answer || ""); emitir(); }
@@ -3689,13 +3724,19 @@ async function nlLissResponder(txt){
   var res = null;
   NL.lissPensando = true;
   NL.difyFerramenta = false;
+  var inicio = Date.now();
   try{ res = await nlDifyPergunta(txt, aoBloco); }catch(e){ res = null; }
+  // se a resposta caiu no caminho, primeiro busca no Dify a que ele ja gerou (assim nada e perdido nem duplicado)
+  if((!res || (!res.completo && !mostrou)) && !mostrou && NL.difyConv){
+    try{ var rec = await nlDifyRecuperar(txt, inicio); if(rec){ res = rec; } }catch(e){}
+  }
   // queda rapida de conexao: tenta de novo ate 03 vezes (2s, 4s, 6s), so se nada foi mostrado e nenhuma ferramenta rodou
   var esperas = [2000, 4000, 6000];
   for(var t = 0; t < esperas.length; t++){
     var falhou = !res || (!res.completo && !mostrou);
     if(!falhou || mostrou || NL.difyFerramenta){ break; }
     try{ await new Promise(function(ok){ setTimeout(ok, esperas[t]); }); res = await nlDifyPergunta(txt, aoBloco); }catch(e2){ res = null; }
+    if((!res || (!res.completo && !mostrou)) && !mostrou && NL.difyConv){ try{ var rec2 = await nlDifyRecuperar(txt, inicio); if(rec2){ res = rec2; } }catch(e3){} }
   }
   NL.lissPensando = false;
   await fila;
