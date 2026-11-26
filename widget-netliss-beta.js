@@ -3490,7 +3490,14 @@ async function nlDifyPergunta(texto, aoBloco){
   // (antes era so o aparelho: em navegador que nao guarda dados a Liss perdia a memoria a cada mensagem)
   var paiId = "";
   if(NL.difyConv){
-    try{ var ult = await nlDifyUltima(); if(ult && ult.id){ paiId = ult.id; } }catch(e){}
+    try{
+      var ult = await nlDifyUltima();
+      if(ult && ult.id){
+        // se a ultima e esta mesma pergunta que ficou sem resposta (a conexao caiu e o Dify descartou), pula ela
+        var vazia = !String(ult.answer || "").trim() && String(ult.query || "").trim() === String(texto || "").trim();
+        paiId = (vazia && ult.parent_message_id) ? ult.parent_message_id : ult.id;
+      }
+    }catch(e){}
     if(!paiId && NL.difyPai && NL.difyPai.conv === NL.difyConv && NL.difyPai.msg){ paiId = NL.difyPai.msg; }
     if(!paiId){ var pai = nlLer("netliss_liss_pai"); if(pai && pai.conv === NL.difyConv && pai.msg){ paiId = pai.msg; } }
   }
